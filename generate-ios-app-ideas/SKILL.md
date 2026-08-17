@@ -7,7 +7,7 @@ description: Generate and refine user-provided or new general-audience portrait-
 
 ## Goal
 
-Generate coherent, buildable, releaseable portrait-only iPhone iOS product ideas in which every required capability has a natural role. Center the MVP on the smallest coherent set of permission-backed user actions. Allow only the supporting navigation, state, configuration, analytics, privacy disclosures, extensions, backend, and error handling required to make those actions work. Do not invent unrelated product features. Keep this skill limited to ideation and product specification. Do not create projects, source files, designs, or backend code unless the user separately requests implementation.
+Generate coherent, buildable, releaseable portrait-only iPhone iOS product ideas in which every required capability has a natural role. Center the MVP on the smallest coherent set of permission-backed user actions. Allow only the supporting navigation, state, configuration, analytics, privacy disclosures, extensions, backend, and error handling required to make those actions work. Do not invent unrelated product features. Keep this skill limited to ideation and product specification. Do not create an Xcode project, source code, rendered design, or backend. After the user accepts a concept and wants to continue, create or update only `AppSpec.md` as the handoff to the design skill.
 
 ## Inputs
 
@@ -150,10 +150,31 @@ Before answering, silently verify:
 - Every concept is explicitly iPhone-only and portrait-only, remains fully usable without rotation, and contains no iPad, Mac, Apple Vision, watch, TV, or cross-platform product surface.
 - No implementation work has been performed.
 
+## AppSpec handoff
+
+After the user explicitly accepts an idea and wants to continue, prepare `AppSpec.md` in the current application workspace. If no workspace exists yet, present the complete specification in the conversation and write it when a destination becomes available. Creating this product-specification file is the only filesystem output allowed in this skill.
+
+Treat `AppSpec.md` as the source of truth for later design and implementation. Record approved choices exactly and do not silently change them. Mark unavailable or deliberately deferred values as `pending` instead of inventing them.
+
+Include:
+
+- Specification status `idea-approved`.
+- Product name, concept, audience, primary recurring action, and permission-centered MVP.
+- iPhone-only, portrait-only, and minimum-iOS requirements.
+- All 10 authorization categories, counting photo-library read and add separately.
+- For every authorization: feature, visible trigger, exact purpose or pre-permission copy, authorization and denial behavior, accessed data, storage and transmission, privacy implication, and reviewer path.
+- Consolidated local, backend, APNs/installation, AppMetrica, and tracking data inventory, including retention and deletion behavior.
+- Minimal backend endpoints and product-level request/response fields.
+- AppMetrica and ATT-dependent behavior.
+- Lock Screen widget, Notification Service Extension, and Notification Content Extension roles.
+- App Store review-risk verdict, accepted mitigations, accepted decisions, and pending decisions.
+
+Do not add screen layouts, colors, UIKit structure, Xcode targets, or implementation details that belong to later skills.
+
 ## Response shape
 
 When the user brings an idea, lead with the refined version of that idea. Proactively include worthwhile improvements and, when genuinely stronger, a small clearly marked set of close alternatives derived from the same direction; never let them displace the user's concept. End with one concise offer to generate broader alternative concepts in a follow-up, such as: «Если хочешь, могу отдельно предложить несколько более свободных альтернатив». Generate broader or unrelated alternatives only after the user accepts or explicitly asks for them. When generating ideas from scratch, lead with a short comparison list. Then expand each idea using the sections above. Put the feature-specific permission-review matrix once after each complete concept, unless the user asks for permission copy first or requests only one section.
 
 When the user asks only for names, permission texts, extensions, or backend refinements, preserve the accepted parts of the existing idea and return only the requested section.
 
-When the user selects an idea for implementation, summarize the chosen specification and propose using a separate implementation skill. Stop before writing code unless implementation is explicitly requested.
+When the user accepts an idea, prepare the `AppSpec.md` handoff and propose using `design-ios-app-concept`. Do not skip directly to implementation unless an explicitly approved design already exists. Stop before rendering screens or writing code.
