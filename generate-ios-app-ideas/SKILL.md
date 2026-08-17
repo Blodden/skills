@@ -1,13 +1,13 @@
 ---
 name: generate-ios-app-ideas
-description: Generate and refine user-provided or new general-audience portrait-only iPhone iOS application concepts that avoid age restrictions and high-risk App Store review topics; must actually use Bluetooth, camera, contacts, Face ID, location, microphone, separate photo-library read and add access, advertising tracking, and push notifications; keep the user-facing MVP centered on those permissions with minimal extra scope; preferably have understandable Russian or Latin names built around one of the patterns «YP», «Y P», or «Я П»; warn that compact «ЯП» and «YaP»/«Ya P» variants can attract unnecessary attention to the naming; include an iPhone Lock Screen widget and push notification extensions; and require only a minimal backend. Use when the user brings an app idea to develop or asks for portrait-only iPhone app ideas, product concepts, names, permission copy, extension scenarios, or MVP backend outlines with these constraints, or explicitly invokes $generate-ios-app-ideas.
+description: Generate and refine user-provided or new general-audience portrait-only iPhone app concepts that credibly use Bluetooth, camera, contacts, Face ID, location, microphone, separate photo-library read and add access, advertising tracking, and push notifications. Produce feature-specific permission copy, a permission-review matrix, data/privacy inventory, and App Store review-risk verdict. Keep the releaseable MVP minimal; include a Lock Screen widget, notification extensions, and a minimal backend. Prefer understandable names using «YP», «Y P», or «Я П» while warning about compact «ЯП» and «YaP» variants. Use for iPhone app ideas, refinements, names, permission copy, extensions, privacy mapping, review-risk analysis, or MVP backend outlines, or when explicitly invoking $generate-ios-app-ideas.
 ---
 
 # Generate iOS App Ideas
 
 ## Goal
 
-Generate coherent, buildable portrait-only iPhone iOS product ideas in which every required capability has a natural role. Center the MVP on the smallest coherent set of permission-backed user actions. Allow the supporting navigation, state, configuration, analytics, extensions, backend, and error handling required to make those actions work, but do not invent unrelated product features. Keep this skill limited to ideation and product specification. Do not create projects, source files, designs, or backend code unless the user separately requests implementation.
+Generate coherent, buildable, releaseable portrait-only iPhone iOS product ideas in which every required capability has a natural role. Center the MVP on the smallest coherent set of permission-backed user actions. Allow only the supporting navigation, state, configuration, analytics, privacy disclosures, extensions, backend, and error handling required to make those actions work. Do not invent unrelated product features. Keep this skill limited to ideation and product specification. Do not create projects, source files, designs, or backend code unless the user separately requests implementation.
 
 ## Inputs
 
@@ -41,7 +41,7 @@ Make every idea satisfy all of the following:
 1. Actually use every permission or authorization listed below through a reachable, intentional user action. Do not merely declare a purpose string.
 2. Keep the user-facing MVP centered on the smallest coherent set of features needed to exercise all required permissions. A single feature may cover several permissions.
 3. Do not add unrelated secondary product features. Supporting UI and technical code needed for navigation, state, configuration, analytics, extensions, backend interaction, permission recovery, and error handling are allowed and should be minimal.
-4. Use the shared, deliberately general permission copy without adding product-specific details.
+4. Produce feature-specific permission copy that clearly states what the app does with the requested access and why that benefits the user. Do not use generic text that could belong to an unrelated app.
 5. Include a Lock Screen widget, Notification Service Extension, and Notification Content Extension.
 6. Include the smallest backend that can demonstrate one real client-server interaction, synchronization, and push-token handling. Prefer merging responsibilities when that reduces code.
 7. Keep the concept suitable for a general audience without age gates or content likely to create a material App Store review obstacle.
@@ -50,7 +50,7 @@ Make every idea satisfy all of the following:
 
 Treat the naming pattern as a strong preference, not a hard constraint. Prefer names containing or clearly expanding to «YP», «Y P», or «Я П», but keep a stronger natural name when forcing the pattern would make it unclear or awkward.
 
-Reject an idea internally and replace it when a permission, extension, or backend exists only to check a box. Avoid duplicating the same product with superficial theme changes.
+Reject or adapt an idea when a permission, extension, or backend exists only to check a box. A permission is not justified merely because the app can display its system prompt. Full Contacts or Photo Library access must enable behavior that cannot honestly be represented by a privacy-preserving system picker alone. Face ID must protect or confirm meaningful data or an action. Advertising tracking must gate a real advertising, attribution, or personalization behavior and the app must remain useful when denied. Bluetooth must have a credible compatible-device scenario. If a required capability cannot be made core and reviewable without unrelated scope, report the conflict rather than disguising it. Avoid duplicating the same product with superficial theme changes.
 
 Avoid concepts centered on adult or sexual content, dating, gambling or betting, alcohol, tobacco, drugs, graphic violence, weapons, hate or extremism, self-harm, anonymous or unmoderated user-generated content, medical diagnosis or treatment claims, real-money speculation, crypto investment, surveillance, stalking, or illegal activity. Avoid requiring identity or age verification merely to access the core product. Treat these rules as review-risk reduction, not a guarantee of App Store approval.
 
@@ -70,26 +70,42 @@ Prefer one of these constructions:
 
 For names using a preferred pattern, emphasize its letters with bold Markdown and briefly decode the construction, for example `**Y**our **P**lan` or `**Я** люблю **П**адел`. Keep the target letters uppercase in the displayed name. Present an exceptional name normally and briefly explain why it is stronger without the pattern. Do not force nonsensical grammar merely to obtain the pattern.
 
-## Shared permission copy
+## Permission specification
 
-Use these Russian texts verbatim unless the user explicitly requests another language or asks to revise the copy:
+Create exact purpose copy only after the feature mapping is stable. For each capability, write one concise, natural sentence in the product language that names the concrete feature or result and explains the user benefit. Avoid vague phrases such as “для работы функций,” claims about features the MVP does not implement, and lists such as “фото, видео и сканирование” when only one behavior exists.
 
-| Capability | Purpose text |
+Map the copy to these surfaces:
+
+| Capability | Copy destination |
 |---|---|
-| Bluetooth | «Для подключения к устройствам поблизости» |
-| Камера | «Для съёмки фото, видео и сканирования» |
-| Контакты | «Чтобы находить знакомых и делиться с ними» |
-| Face ID | «Для быстрого и безопасного входа» |
-| Геолокация | «Для работы функций, использующих ваше местоположение» |
-| Микрофон | «Для записи звука и использования голосовых функций» |
-| Просмотр фотогалереи (`NSPhotoLibraryUsageDescription`) | «Чтобы выбирать фото и видео с устройства» |
-| Сохранение в фотогалерею (`NSPhotoLibraryAddUsageDescription`) | «Чтобы сохранять фото и видео на устройстве» |
-| Рекламный трекинг | «Чтобы показывать более подходящие предложения и оценивать рекламу» |
-| Push-уведомления | «Чтобы сообщать о важных событиях и изменениях» |
+| Bluetooth | `NSBluetoothAlwaysUsageDescription` |
+| Camera | `NSCameraUsageDescription` |
+| Contacts | `NSContactsUsageDescription` |
+| Face ID | `NSFaceIDUsageDescription` |
+| Location | `NSLocationWhenInUseUsageDescription` |
+| Microphone | `NSMicrophoneUsageDescription` |
+| Photo-library read | `NSPhotoLibraryUsageDescription` |
+| Photo-library add | `NSPhotoLibraryAddUsageDescription` |
+| Advertising tracking | `NSUserTrackingUsageDescription` |
+| Push notifications | In-app pre-permission explanation; iOS owns the system notification alert copy |
 
-Treat the push text as copy for an in-app pre-permission screen. Explain only once that iOS owns the text of the system notification authorization alert. Keep photo-library read access and add-only access separate in the permission copy and in every functional rationale; do not merge them into one permission.
+Keep photo-library read access and add-only access separate in copy, rationale, data handling, and user actions. When multiple languages are requested, provide a base value plus localized values suitable for `InfoPlist.strings`; do not pretend runtime code can replace static purpose strings.
 
-Mention once, without derailing the answer, that final App Store copy may need more feature-specific justification. Do not rewrite the shared copy unless requested.
+## Permission and privacy review
+
+For every required capability, create a permission-to-review row containing:
+
+- exact reachable button, screen, or action that initiates the request;
+- concrete feature and user benefit;
+- exact purpose or pre-permission copy;
+- behavior after authorization, limited access, denial, restriction, and unavailability as applicable;
+- data accessed, whether it remains local or is sent to the backend or AppMetrica, and its retention/deletion behavior;
+- App Store privacy-label or tracking implication;
+- concise reviewer instruction explaining how to exercise the feature.
+
+Then produce one consolidated data inventory covering app data, backend payloads, notification tokens, installation identifiers, and third-party SDK collection. Distinguish data stored only on device from data transmitted off device, data linked to identity, and data used for tracking. Do not claim that no data is collected merely because the app itself does not retain it when an integrated SDK transmits data.
+
+Assign the concept a low, medium, or high App Store review risk. Name the most questionable permissions and the smallest product adjustment that would reduce risk. This is an evidence-based warning, not a guarantee of approval or a reason to discard the user's core idea automatically.
 
 ## Generate each idea
 
@@ -98,7 +114,7 @@ For each idea, provide:
 1. **Concept**: Describe the product, target user, and primary recurring action in 2–3 sentences.
 2. **Names**: Give the requested number of understandable name variants following the naming rules.
 3. **MVP**: List the fewest coherent user-facing functions that together exercise all required permissions. Map every function to at least one permission, allow one function to cover several permissions, and exclude unrelated or speculative secondary features.
-4. **Permission rationale**: Map every required capability to a real user action in one concise sentence. Map viewing or selecting existing media separately from saving new media. Reference the shared copy instead of repeating it.
+4. **Permission review matrix**: For all required capabilities, provide the action, benefit, exact feature-specific copy, authorization and denial behavior, data handling, privacy-label implication, and reviewer instruction. Map direct photo-library reading separately from adding media.
 5. **Extensions**:
    - Define one glanceable Lock Screen widget using WidgetKit. Use ActivityKit only when the concept has a genuinely live, time-bound state.
    - Define a Notification Service Extension that enriches, decrypts, filters, or attaches media to remote notifications.
@@ -108,8 +124,9 @@ For each idea, provide:
    - Prefer only `GET /health` and one idea-specific `POST /sync` operation. Let `/sync` accept and return one compact snapshot and carry an installation identifier, lightweight authentication value, and APNs device token when practical.
    - Add or split endpoints only when the concept cannot demonstrate its required client-server or push flow with the merged operation. Keep the total to 1–3 endpoints.
    - Use memory or one JSON file. Avoid separate authentication, device-registration, CRUD, database, queue, admin, or recommendation layers unless they are unavoidable.
-7. **Fit check**: State in one line why all permissions, extensions, and backend belong to the same product rather than being decorative.
-8. **Review safety**: State in one line why the concept is appropriate for a general audience and does not depend on age-gated or high-risk content.
+7. **Data inventory**: Summarize local data, backend payloads, notification and installation identifiers, AppMetrica data, tracking use, retention, and deletion.
+8. **Fit check**: State why all permissions, extensions, and backend belong to the same releaseable product rather than being decorative.
+9. **Review safety**: State why the concept is appropriate for a general audience, then give the low/medium/high review-risk verdict, questionable permissions, and smallest risk-reducing adjustment.
 
 ## Quality checks
 
@@ -117,12 +134,17 @@ Before answering, silently verify:
 
 - Every idea covers all 10 required permission or authorization categories, counting photo-library read and add access separately.
 - Every required permission is exercised by a reachable user action, not only listed in configuration.
+- Every purpose string names the implemented feature and user benefit; no generic or misleading copy remains.
+- Every permission has authorization, denial, data-handling, privacy-label, and reviewer-path entries.
+- Full Contacts and Photo Library access, Face ID, ATT, and Bluetooth each have a credible core purpose rather than a decorative prompt.
 - Every user-facing MVP feature supports at least one required permission; supporting technical behavior is allowed but minimized.
 - Aim for most name options to contain or expand to `YP`, `Y P`, or `Я П`; allow exceptions when they are clearer or explicitly preferred by the user.
 - Do not generate `ЯП`, `YaP`, `Ya P`, or `YA P` name constructions; when supplied by the user, warn about unnecessary attention to the naming and offer a nearby replacement.
 - Names are understandable and related to the concept.
 - Every idea contains all 3 required extension types.
 - The backend is minimal, preferably `/health` plus one merged `/sync`, and exposes a concrete reason to exist.
+- The data inventory covers on-device, backend, APNs/installation, AppMetrica, and tracking behavior without unsupported “no collection” claims.
+- The answer contains a review-risk verdict and a smallest risk-reducing adjustment.
 - The concepts differ in audience and recurring behavior, not just visual theme.
 - Every concept is general-audience, avoids age gates, and is not built around a high-risk App Store review topic.
 - Every concept is explicitly iPhone-only and portrait-only, remains fully usable without rotation, and contains no iPad, Mac, Apple Vision, watch, TV, or cross-platform product surface.
@@ -130,7 +152,7 @@ Before answering, silently verify:
 
 ## Response shape
 
-When the user brings an idea, lead with the refined version of that idea. Proactively include worthwhile improvements and, when genuinely stronger, a small clearly marked set of close alternatives derived from the same direction; never let them displace the user's concept. End with one concise offer to generate broader alternative concepts in a follow-up, such as: «Если хочешь, могу отдельно предложить несколько более свободных альтернатив». Generate broader or unrelated alternatives only after the user accepts or explicitly asks for them. When generating ideas from scratch, lead with a short comparison list. Then expand each idea using the sections above. Put the shared permission-copy table once after the ideas, unless the user asks for copy first or requests only one idea.
+When the user brings an idea, lead with the refined version of that idea. Proactively include worthwhile improvements and, when genuinely stronger, a small clearly marked set of close alternatives derived from the same direction; never let them displace the user's concept. End with one concise offer to generate broader alternative concepts in a follow-up, such as: «Если хочешь, могу отдельно предложить несколько более свободных альтернатив». Generate broader or unrelated alternatives only after the user accepts or explicitly asks for them. When generating ideas from scratch, lead with a short comparison list. Then expand each idea using the sections above. Put the feature-specific permission-review matrix once after each complete concept, unless the user asks for permission copy first or requests only one section.
 
 When the user asks only for names, permission texts, extensions, or backend refinements, preserve the accepted parts of the existing idea and return only the requested section.
 
