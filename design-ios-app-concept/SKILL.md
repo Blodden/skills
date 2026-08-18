@@ -1,6 +1,6 @@
 ---
 name: design-ios-app-concept
-description: Design and render an accepted portrait-only iPhone application concept before implementation. Use when an idea, name, permissions, feature-specific permission copy, data behavior, extensions, and minimal backend have already been accepted and the user wants screen structure, permission UX, visual mockups, accessibility behavior, widget and notification layouts, or an app icon. Produce an approved design handoff without creating an Xcode project, application source code, dependencies, or backend code.
+description: Design and render an accepted portrait-only iPhone application concept before implementation. Use when an idea, name, permissions, feature-specific permission copy, data behavior, extensions, and minimal backend have already been accepted and the user wants screen structure, a seamless startup/loading experience, permission UX, visual mockups, accessibility behavior, widget and notification layouts, or an app icon. Produce an approved design handoff without creating an Xcode project, application source code, dependencies, or backend code.
 ---
 
 # Design iOS App Concept
@@ -19,6 +19,8 @@ Require `idea-approved` status or an equivalent explicit approval in the convers
 
 Do not reopen accepted decisions unless they create a concrete feasibility, privacy, accessibility, or App Store review conflict. Explain the conflict and obtain approval before changing `AppSpec.md`.
 
+Treat every new or changed user-facing screen or state requested after design approval as a design delta. Render and present at least the affected screen or state, obtain explicit approval, and update `AppSpec.md` before implementation. A request to implement does not approve an appearance the user has not seen. Never mark a design delta approved after its code has already been written.
+
 ## Design rules
 
 - Use the fewest screens that keep all permission-backed flows understandable. Prefer one primary screen with compact sections, sheets, alerts, and Apple-provided controllers.
@@ -28,6 +30,9 @@ Do not reopen accepted decisions unless they create a concrete feasibility, priv
 - Preserve exact approved feature-specific permission copy. For push authorization, design the app-owned explanation while recognizing that iOS owns the system alert text.
 - Cover `notDetermined`, authorized or limited, denied, restricted, unavailable, loading, empty, offline, success, and error states where applicable.
 - Represent `cloudSyncEnabled` with only compact checking, available, remotely disabled, and offline/fallback status states in an existing screen. Do not add an in-app switch, settings screen, or separate feature-flag UI.
+- Design one user-perceived startup screen, not two visibly different screens. Explicitly present and obtain approval for its background, artwork source such as the app icon or a separate mark, sizing, placement, corner treatment, presence or absence of text and an indicator, and transition to the main interface. Make the static iOS launch representation and its programmatic continuation use the same approved background, artwork, sizing, and placement so the handoff has no perceptible flash. Keep the static representation free of dynamic content and nonlocalized text.
+- Start required local initialization and the single `cloudSyncEnabled` request as soon as the programmatic startup continuation appears. Default its app-controlled display interval to at least 0.7 seconds and at most 2 seconds; record both values in `AppSpec.md` and obtain approval for any change. If the request exceeds the maximum, design a transition using the last cached value or `true` on first install, with compact offline/fallback status on the main screen.
+- Show the startup screen once per cold process launch, not whenever the app returns from the background. Do not place permissions, ATT prompts, advertisements, retry controls, or unrelated onboarding on it.
 - Keep the core application useful when optional access, including ATT, is denied.
 - Make microphone recording, saving, saved, playback, replace, and delete states clear through both status and controls.
 - Show explicit standard UIKit success and failure feedback after PhotoKit add operations.
@@ -57,7 +62,7 @@ Provide:
 1. Navigation map and minimum screen inventory.
 2. Mapping from every accepted feature and permission trigger to a screen and control.
 3. Low-fidelity wireframes for every distinct screen or important state.
-4. Main, empty, loading, error, permission-not-determined, denied, limited, authorized, and compact `cloudSyncEnabled` disabled/offline states where relevant.
+4. The single startup screen plus main, empty, loading, error, permission-not-determined, denied, limited, authorized, and compact `cloudSyncEnabled` disabled/offline states where relevant. Specify the startup background, artwork source, sizing, placement, corner treatment, text and indicator choice, transition, approved 0.7-second minimum, 2-second maximum, and timeout fallback.
 5. The exact action that triggers each system permission request and the approved copy reproduced verbatim.
 6. Widget and notification-content layouts plus relevant notification actions.
 7. A compact visual system covering colors, typography, spacing, buttons, cards, icons, and approved light/dark behavior.
@@ -76,12 +81,13 @@ Store approved candidates in the application workspace under `Design/` using cle
 
 ### Phase 4: Approval gate
 
-Ask the user to approve the screen structure, feature placement, permission triggers and denied states, visual system, widget and notification layouts, and app icon. **Stop and wait. Do not start implementation.**
+Ask the user to approve the screen structure, startup appearance, timing and fallback behavior, feature placement, permission triggers and denied states, visual system, widget and notification layouts, and app icon. **Stop and wait. Do not start implementation.**
 
 After explicit approval, update `AppSpec.md` with:
 
 - `design-status: approved`;
 - approved screen inventory and navigation;
+- approved startup appearance, minimum and maximum duration, initialization work, feature-flag timeout fallback, and cold-launch-only behavior;
 - permission-to-screen and state mapping;
 - visual system and accessibility behavior;
 - widget and notification layouts;
