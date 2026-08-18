@@ -28,7 +28,7 @@ Treat `AppSpec.md` as the accepted product and privacy contract and `Release/rel
 
 Do not repeat checks for:
 
-- AppMetrica API key configuration or the custom `launch` event.
+- AppMetrica API key configuration or analytics integration.
 - Replacement of the local backend with production HTTPS.
 - ATT, IDFA, or the actual tracking implementation.
 - Debug URLs, test keys, embedded secrets, or unsupported Apple platforms.

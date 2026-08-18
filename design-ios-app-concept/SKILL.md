@@ -41,11 +41,11 @@ Do not reopen accepted decisions unless they create a concrete feasibility, priv
 
 Summarize without redefining:
 
-- product name and primary scenario;
+- product name, `com.idev.<product-slug>` bundle identifier family, and primary scenario;
 - permission-centered MVP and all 10 authorization mappings;
 - exact permission and pre-permission copy;
 - denial behavior and data handling;
-- Yandex Cloud backend, `cloudSyncEnabled` fallback and disabled behavior, AppMetrica, ATT, widget, and notification-extension roles;
+- Yandex Cloud backend, `cloudSyncEnabled` fallback and disabled behavior, AppMetrica event inventory and per-application SDK key status, ATT, widget, and notification-extension roles;
 - platform, orientation, general-audience, and review-risk constraints.
 
 Resolve contradictions with the user before rendering. Do not continue from an internally inconsistent specification.

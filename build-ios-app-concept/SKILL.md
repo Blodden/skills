@@ -20,13 +20,13 @@ Require:
 - Exact feature-specific permission and pre-permission copy for all required authorization categories.
 - Approved permission-review matrix, data inventory, AppMetrica and ATT behavior, extension roles, and Yandex Cloud backend contract with the single `cloudSyncEnabled` flag.
 - Destination parent directory or an existing project path.
-- Product/module name and bundle identifier or bundle-identifier prefix.
+- Product/module name and approved lowercase ASCII product slug. Derive the main identifier as `com.idev.<product-slug>` rather than accepting another default prefix.
 
 If idea or design approval is missing, stop and propose `generate-ios-app-ideas` or `design-ios-app-concept` as appropriate. Do not perform the missing approval inside this implementation skill.
 
 Before editing, compare the specification, mockups, permission matrix, data inventory, backend contract, and extension roles. Report contradictions instead of resolving them silently. Preserve accepted decisions unless a concrete implementation, platform, privacy, or review conflict requires renewed user approval.
 
-Ask only for missing blocking inputs. Allow an empty configurable AppMetrica key. Request Apple Developer Team details only when device signing or capabilities require them. Reuse an authenticated Yandex Cloud account and explicitly selected cloud/folder when available; otherwise create deployable Yandex Cloud sources and mark deployment credentials as `pending` without silently substituting another provider. Treat privacy-policy, support, Terms, and EULA values as non-blocking `pending` items for the App Store preparation workflow.
+Ask only for missing blocking inputs. Ask the user to create or select a distinct AppMetrica application for the final bundle identifier and provide its SDK API key; treat a missing key as non-blocking `pending` during initial implementation. Never invent a key or silently reuse one from another application. Request Apple Developer Team details only when device signing or capabilities require them. Reuse an authenticated Yandex Cloud account and explicitly selected cloud/folder when available; otherwise create deployable Yandex Cloud sources and mark deployment credentials as `pending` without silently substituting another provider. Treat privacy-policy, support, Terms, and EULA values as non-blocking `pending` items for the App Store preparation workflow.
 
 Do not require the user to create an empty Xcode project. Create the directory and targets after inspecting the destination. Never overwrite a non-empty directory, existing project, signing settings, or user-owned files without resolving the ambiguity first.
 
@@ -75,6 +75,16 @@ Create:
 - Notification Service Extension, iOS 15.0.
 - Programmatic Notification Content Extension, iOS 15.0.
 - Shared App Group only where the approved app and widget exchange a compact snapshot.
+
+Use this identifier family exactly:
+
+```text
+Main app:                    com.idev.<product-slug>
+Lock Screen widget:          com.idev.<product-slug>.widget
+Notification service:        com.idev.<product-slug>.notification-service
+Notification content:        com.idev.<product-slug>.notification-content
+App Group:                    group.com.idev.<product-slug>
+```
 
 For every target set the supported Apple platforms as narrowly as the generator permits:
 
@@ -144,12 +154,15 @@ Read values once into an injected immutable `AppConfiguration`. Never bundle APN
 
 Before integration, consult current official AppMetrica iOS documentation and package sources. Select and pin a Swift Package version supporting iOS 15 and use its current module and activation API.
 
+- Register or select one AppMetrica application matching the final `com.idev.<product-slug>` identifier. Obtain its SDK API key from AppMetrica Settings; do not use a Post API key. One AppMetrica account may contain multiple applications, but each generated iPhone application must use its own explicitly supplied SDK key unless the user deliberately requests cross-application reporting.
+- Store the supplied key only in the application's `.xcconfig` configuration and expose it to the processed Info.plist through build-setting substitution. Do not hardcode it in Swift, copy it into `AppSpec.md`, a release manifest, skill files, logs, or user-facing UI.
 - Isolate SDK calls in an instance-owned `AppMetricaAnalyticsClient`; do not expose an application singleton.
 - Make `APPMETRICA_API_KEY` replaceable without Swift changes. With an empty or invalid key, disable analytics gracefully and keep the app usable.
-- After successful SDK activation, report a custom event named exactly `launch` once per process. Do not duplicate it on scene foreground transitions or report it when activation did not succeed.
+- Activate AppMetrica once from the application composition root. Explicitly disable SDK location tracking when location is not part of the approved AppMetrica data inventory, and enable advertising-identifier tracking only after ATT authorization.
 - Keep selected modules, data sending, advertising support, and ATT-dependent behavior consistent with `AppSpec.md` and current official SDK controls.
-- Report only useful product events such as `launch`, screen open, feature action, permission outcome, and API result. Never send contacts, precise location, media, recordings, advertising identifiers, secrets, or other sensitive payloads as custom event parameters.
+- Report only useful product events such as screen open, feature action, permission outcome, and API result. Do not add a synthetic app-launch event. Never send contacts, precise location, media, recordings, advertising identifiers, secrets, or other sensitive payloads as custom event parameters.
 - Record SDK-level collection separately from custom event parameters and document that changing the API key may require terminating and relaunching the process.
+- Implement runtime API-key switching only when the user explicitly requests it. Route subsequent custom events through an AppMetrica reporter for the new key, manage that reporter's session manually, and state that the main SDK's automatic data remains associated with the original activation until the next process launch. Persist an override in `UserDefaults` only when approved; do not add a settings screen solely for key switching.
 
 ## Extensions
 
@@ -199,10 +212,10 @@ Verify in proportion to the available environment:
 5. Search for storyboards, XIBs, test targets, app-owned singletons, mutable static storage, observers, `URLSession.shared`, and unsupported platform settings; fix violations or explain unavoidable framework calls.
 6. Exercise every permission feature from its approved visible trigger through authorized or simulator-available behavior and denial recovery. Capture screenshots and the accessibility hierarchy before and after important interactions. Retry a failed simulator interaction once, then classify the limitation honestly. Do not create XCTest or UI-test targets.
 7. Verify source, localized, and processed Info.plist purpose strings against `AppSpec.md` verbatim.
-8. Verify empty-key AppMetrica behavior. With a valid test key, verify successful activation and one attempted custom `launch` event per process, not per foreground transition.
+8. Verify empty-key AppMetrica behavior. With the user-supplied SDK key, inspect the processed Info.plist without printing the key, verify successful activation and delivery attempts for approved product events triggered by real screen or feature actions, and record AppMetrica-console receipt as user/account-dependent when console access is unavailable. Verify that no synthetic app-launch event is reported.
 9. Inspect each app-owned target's Privacy Manifest and resolved SDK manifests against actual APIs and the approved data inventory.
 10. Inspect source entitlements and generator configuration for App Group and Push. When signing exists, inspect provisioning profiles and signed products; otherwise list the exact pending Apple Developer steps.
-11. Verify distinct extension bundle identifiers and deployment targets, `TARGETED_DEVICE_FAMILY = 1`, iPhone-only supported platforms, disabled Mac/Catalyst/Apple Vision compatibility, and portrait-only processed main-app Info.plist.
+11. Verify the exact `com.idev.<product-slug>` main and extension identifiers, `group.com.idev.<product-slug>` App Group, distinct extension deployment targets, `TARGETED_DEVICE_FAMILY = 1`, iPhone-only supported platforms, disabled Mac/Catalyst/Apple Vision compatibility, and portrait-only processed main-app Info.plist.
 12. Verify the approved AppIcon is compiled without missing-icon warnings and inspect it at full size and a small Home Screen-like size.
 13. State which Bluetooth, camera, contacts, Face ID, location, microphone, PhotoKit, ATT, remote push, signing, or hardware checks still require a physical device or external credentials.
 14. When signing is available, archive Release for Generic iOS Device and inspect signed app and extension entitlements. Otherwise record archive validation as signing-dependent.

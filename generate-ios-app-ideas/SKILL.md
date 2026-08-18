@@ -47,6 +47,7 @@ Make every idea satisfy all of the following:
 7. Keep the concept suitable for a general audience without age gates or content likely to create a material App Store review obstacle.
 8. Make the product exclusively an iOS app for iPhone. Do not propose iPad or iPadOS support, macOS, Mac Catalyst, Designed for iPhone/iPad on Mac distribution, visionOS or Apple Vision, watchOS, tvOS, or cross-platform and companion apps. Treat the widget and notification extensions as parts of the iPhone app.
 9. Make the iPhone application portrait-only. Keep every core flow usable without device rotation; do not propose landscape-only screens, interfaces, or features. Treat Lock Screen widget and notification layouts as portrait-oriented surfaces.
+10. Derive the main bundle identifier as `com.idev.<product-slug>`. Normalize the slug to lowercase ASCII letters and digits without spaces or punctuation; transliterate non-Latin names and ask for approval only when the result is ambiguous. Reserve `.widget`, `.notification-service`, and `.notification-content` suffixes for the required extensions and `group.com.idev.<product-slug>` for the App Group.
 
 Treat the naming pattern as a strong preference, not a hard constraint. Prefer names containing or clearly expanding to «YP», «Y P», or «Я П», but keep a stronger natural name when forcing the pattern would make it unclear or awkward.
 
@@ -149,6 +150,7 @@ Before answering, silently verify:
 - The concepts differ in audience and recurring behavior, not just visual theme.
 - Every concept is general-audience, avoids age gates, and is not built around a high-risk App Store review topic.
 - Every concept is explicitly iPhone-only and portrait-only, remains fully usable without rotation, and contains no iPad, Mac, Apple Vision, watch, TV, or cross-platform product surface.
+- Every concept has a deterministic `com.idev.<product-slug>` bundle identifier and matching extension and App Group identifiers.
 - No implementation work has been performed.
 
 ## AppSpec handoff
@@ -160,13 +162,13 @@ Treat `AppSpec.md` as the source of truth for later design and implementation. R
 Include:
 
 - Specification status `idea-approved`.
-- Product name, concept, audience, primary recurring action, and permission-centered MVP.
+- Product name, deterministic `com.idev.<product-slug>` main bundle identifier, derived extension bundle identifiers and App Group identifier, concept, audience, primary recurring action, and permission-centered MVP.
 - iPhone-only, portrait-only, and minimum-iOS requirements.
 - All 10 authorization categories, counting photo-library read and add separately.
 - For every authorization: feature, visible trigger, exact purpose or pre-permission copy, authorization and denial behavior, accessed data, storage and transmission, privacy implication, and reviewer path.
 - Consolidated local, backend, APNs/installation, AppMetrica, and tracking data inventory, including retention and deletion behavior.
 - Yandex Cloud backend contract: `/health`, `/config`, `/sync`, `appId` partitioning, the single `cloudSyncEnabled` flag, local fallback behavior, and product-level request/response fields.
-- AppMetrica and ATT-dependent behavior.
+- AppMetrica and ATT-dependent behavior, useful product-event inventory without a synthetic app-launch event, and per-application SDK API key status as `pending` until the user supplies it. Never reuse or invent another application's key.
 - Lock Screen widget, Notification Service Extension, and Notification Content Extension roles.
 - App Store review-risk verdict, accepted mitigations, accepted decisions, and pending decisions.
 
