@@ -1,6 +1,6 @@
 ---
 name: build-ios-app-concept
-description: Create, implement, build, launch, and verify a programmatic UIKit iPhone application from an explicitly approved AppSpec and visual design. Use only after the idea, feature-specific permission copy, permission-review matrix, data inventory, screens, permission UX, visual system, and app icon are approved. Build the smallest permission-centered iOS 15 application with all required permissions, configurable privacy-aware AppMetrica, low mutable static state, Lock Screen widget, notification service/content extensions, Privacy Manifest and entitlement validation, and a minimal working backend. Exclude iPad, Mac, Mac Catalyst, Designed for iPhone/iPad on Mac, visionOS, Apple Vision, storyboards, XIBs, and test targets.
+description: Create, implement, build, launch, and verify a programmatic UIKit iPhone application from an explicitly approved AppSpec and visual design. Use only after the idea, feature-specific permission copy, permission-review matrix, data inventory, screens, permission UX, visual system, and app icon are approved. Build the smallest permission-centered iOS 15 application with all required permissions, configurable privacy-aware AppMetrica, low mutable static state, Lock Screen widget, notification service/content extensions, Privacy Manifest and entitlement validation, and a minimal Yandex Cloud backend with one cloudSyncEnabled feature flag. Exclude iPad, Mac, Mac Catalyst, Designed for iPhone/iPad on Mac, visionOS, Apple Vision, storyboards, XIBs, and test targets.
 ---
 
 # Build iOS App Concept
@@ -18,7 +18,7 @@ Require:
 - `AppSpec.md` with `idea-approved` and `design-status: approved`, or equivalent explicit statuses recorded in the file.
 - Approved portrait mockups, screen inventory, permission-to-screen mapping, visual system, accessibility behavior, widget and notification layouts, and app-icon source.
 - Exact feature-specific permission and pre-permission copy for all required authorization categories.
-- Approved permission-review matrix, data inventory, AppMetrica and ATT behavior, extension roles, and minimal backend contract.
+- Approved permission-review matrix, data inventory, AppMetrica and ATT behavior, extension roles, and Yandex Cloud backend contract with the single `cloudSyncEnabled` flag.
 - Destination parent directory or an existing project path.
 - Product/module name and bundle identifier or bundle-identifier prefix.
 
@@ -26,7 +26,7 @@ If idea or design approval is missing, stop and propose `generate-ios-app-ideas`
 
 Before editing, compare the specification, mockups, permission matrix, data inventory, backend contract, and extension roles. Report contradictions instead of resolving them silently. Preserve accepted decisions unless a concrete implementation, platform, privacy, or review conflict requires renewed user approval.
 
-Ask only for missing blocking inputs. Allow an empty configurable AppMetrica key. Request Apple Developer Team details only when device signing or capabilities require them. Treat production backend, privacy-policy, support, Terms, and EULA values as non-blocking `pending` items for the App Store preparation workflow.
+Ask only for missing blocking inputs. Allow an empty configurable AppMetrica key. Request Apple Developer Team details only when device signing or capabilities require them. Reuse an authenticated Yandex Cloud account and explicitly selected cloud/folder when available; otherwise create deployable Yandex Cloud sources and mark deployment credentials as `pending` without silently substituting another provider. Treat privacy-policy, support, Terms, and EULA values as non-blocking `pending` items for the App Store preparation workflow.
 
 Do not require the user to create an empty Xcode project. Create the directory and targets after inspecting the destination. Never overwrite a non-empty directory, existing project, signing settings, or user-owned files without resolving the ambiguity first.
 
@@ -62,7 +62,7 @@ Apply these rules:
 
 ### Phase 1: Validate the handoff
 
-Create a compact implementation checklist from `AppSpec.md`: feature and permission mappings, exact copy, denial behavior, data flow, screen placement, extension roles, backend payload, analytics and tracking behavior, app icon, platform settings, and pending external credentials. Resolve only blocking contradictions with the user.
+Create a compact implementation checklist from `AppSpec.md`: feature and permission mappings, exact copy, denial behavior, data flow, screen placement, extension roles, Yandex Cloud payloads and resource reuse, `cloudSyncEnabled` behavior, analytics and tracking behavior, app icon, platform settings, and pending external credentials. Resolve only blocking contradictions with the user.
 
 ### Phase 2: Create the project
 
@@ -163,16 +163,24 @@ Give targets distinct bundle identifiers and link only their required frameworks
 
 ## Minimal backend and client
 
-Create the approved minimal backend beside the app in `backend/`. Prefer one source file, the simplest installed runtime, standard-library HTTP support, and no third-party packages.
+Create the approved minimal backend beside the app in `backend/` for Yandex Cloud. Prefer one Python Cloud Function source file plus a pinned `requirements.txt` and one OpenAPI specification. Use only the required YDB dependency; do not add a framework or local server implementation.
 
-Prefer exactly:
+Use one reusable serverless stack:
 
-- `GET /health`.
-- `POST /sync` carrying one compact idea-specific snapshot.
+- Yandex API Gateway exposing exactly `GET /health`, `GET /config?appId=...`, and `POST /sync` unless the user explicitly approves another endpoint.
+- One Python Cloud Function that validates compact Codable-compatible JSON and handles configuration and synchronization.
+- One Serverless YDB database with application data partitioned by `appId`; reuse an existing user-approved mobile backend stack when available.
+- One narrowly scoped runtime service account without static keys in the repository. Keep cloud, folder, function, gateway, database, and service-account IDs in deployment documentation, not Swift source.
 
-Let `/sync` also carry an installation identifier, lightweight bearer value, and APNs device token when practical. Split endpoints only when the approved feature cannot work honestly through the merged operation. Use memory or one ignored local JSON file, deterministic Codable-compatible JSON, explicit status codes, and a single documented start command and sample request.
+Implement exactly one remote Boolean flag named `cloudSyncEnabled`. Store it by `appId`, expose only public read access through `/config`, and mutate it only through the authenticated Yandex Cloud console, CLI, or an IAM-protected direct function invocation. Do not expose public writes or add an in-app switch. A configuration revision is optional; omit it when unused and do not increment it merely because the Boolean changes unless client cache/version logic requires that behavior.
 
-Use an injected configured `URLSession`, timeouts, cancellation, and visible loading and error states. Keep local HTTP allowances debug-only. Allow the production HTTPS URL to remain `pending`, but do not disguise it as a release-ready service. When Apple signing or APNs credentials are unavailable, provide an honest request generator or sender stub and mark remote delivery unverified.
+Fetch the flag once during application launch with an injected configured `URLSession`. Cache the last successful value in instance-owned state backed by `UserDefaults`; use true on first install. Check it before every `/sync`, including APNs-token synchronization. When false, keep local permission-backed functions, score/state, widget sharing, and Bluetooth behavior available and show the approved compact disabled status. Do not use observers, polling, streaming, or a feature-flag SDK.
+
+Let `/sync` carry one compact idea-specific snapshot, an installation identifier, lightweight bearer value, and APNs device token when practical. Never transmit contacts, precise location, photos, recordings, ATT status, IDFA, or other data excluded by the approved inventory.
+
+Before cloud mutations, inspect the active `yc` profile, cloud, and folder. Ask the user to authenticate or activate billing only when required. Prefer budget guardrails such as a `10 RPS` gateway limit, one function instance per zone, two concurrent requests per zone, and small Serverless YDB storage/throughput limits; report the chosen values. Keep a production HTTPS URL in both app configurations after successful deployment. If credentials are unavailable, leave the Yandex Cloud deployment honestly `pending` rather than presenting a local stub as production.
+
+Document reproducible deploy commands, resource names and IDs, `/health`, `/config`, `/sync` examples, and authenticated commands for changing `cloudSyncEnabled`. Never store OAuth tokens, IAM keys, APNs `.p8`, or other secrets. When Apple signing or APNs credentials are unavailable, keep push delivery explicitly unverified.
 
 ## Privacy and future App Store handoff
 
@@ -187,7 +195,7 @@ Verify in proportion to the available environment:
 1. Generate the project, resolve pinned package dependencies, and build the main app and every extension for an available simulator.
 2. Build Release without app-owned compiler warnings. Do not suppress warnings merely to pass.
 3. Launch the app in a simulator, wait for the meaningful application hierarchy, and inspect all principal approved screens instead of accepting the launch screen as success.
-4. Start the backend, call `/health`, and exercise one real `/sync` round trip with the approved models.
+4. Deploy or update the Yandex Cloud backend, call `/health`, exercise `/config` and one real `/sync` round trip, verify `cloudSyncEnabled` in both false and true states, confirm public writes are rejected, and leave the flag at the user-approved final value. Do not change a configuration revision unless the implementation actually uses it.
 5. Search for storyboards, XIBs, test targets, app-owned singletons, mutable static storage, observers, `URLSession.shared`, and unsupported platform settings; fix violations or explain unavoidable framework calls.
 6. Exercise every permission feature from its approved visible trigger through authorized or simulator-available behavior and denial recovery. Capture screenshots and the accessibility hierarchy before and after important interactions. Retry a failed simulator interaction once, then classify the limitation honestly. Do not create XCTest or UI-test targets.
 7. Verify source, localized, and processed Info.plist purpose strings against `AppSpec.md` verbatim.
@@ -217,7 +225,7 @@ Create or update deterministic `Release/release-manifest.json` with:
 - App Group, capabilities, entitlement source, and verification status.
 - Permission keys, exact localized copy, trigger paths, denial behavior, data handling, and reviewer instructions.
 - Data inventory, tracking behavior, AppMetrica modules, and privacy status.
-- Backend, privacy-policy, and support URLs or `pending` markers.
+- Yandex Cloud resource identifiers, backend URL or `pending`, `/health`, `/config`, `/sync`, `cloudSyncEnabled` final value and fallback behavior, and privacy-policy/support URLs or `pending` markers.
 - Extension identifiers and roles.
 - Deterministic application states intended for future App Store screenshots.
 - Device-only, production-backend, signing, APNs, hardware, policy, and archive checks that remain unresolved.

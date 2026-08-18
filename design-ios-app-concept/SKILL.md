@@ -27,6 +27,7 @@ Do not reopen accepted decisions unless they create a concrete feasibility, priv
 - Request a permission only after the user selects the visible feature that needs it. Never design a batch of prompts at launch.
 - Preserve exact approved feature-specific permission copy. For push authorization, design the app-owned explanation while recognizing that iOS owns the system alert text.
 - Cover `notDetermined`, authorized or limited, denied, restricted, unavailable, loading, empty, offline, success, and error states where applicable.
+- Represent `cloudSyncEnabled` with only compact checking, available, remotely disabled, and offline/fallback status states in an existing screen. Do not add an in-app switch, settings screen, or separate feature-flag UI.
 - Keep the core application useful when optional access, including ATT, is denied.
 - Make microphone recording, saving, saved, playback, replace, and delete states clear through both status and controls.
 - Show explicit standard UIKit success and failure feedback after PhotoKit add operations.
@@ -44,7 +45,7 @@ Summarize without redefining:
 - permission-centered MVP and all 10 authorization mappings;
 - exact permission and pre-permission copy;
 - denial behavior and data handling;
-- backend, AppMetrica, ATT, widget, and notification-extension roles;
+- Yandex Cloud backend, `cloudSyncEnabled` fallback and disabled behavior, AppMetrica, ATT, widget, and notification-extension roles;
 - platform, orientation, general-audience, and review-risk constraints.
 
 Resolve contradictions with the user before rendering. Do not continue from an internally inconsistent specification.
@@ -56,7 +57,7 @@ Provide:
 1. Navigation map and minimum screen inventory.
 2. Mapping from every accepted feature and permission trigger to a screen and control.
 3. Low-fidelity wireframes for every distinct screen or important state.
-4. Main, empty, loading, error, permission-not-determined, denied, limited, and authorized states where relevant.
+4. Main, empty, loading, error, permission-not-determined, denied, limited, authorized, and compact `cloudSyncEnabled` disabled/offline states where relevant.
 5. The exact action that triggers each system permission request and the approved copy reproduced verbatim.
 6. Widget and notification-content layouts plus relevant notification actions.
 7. A compact visual system covering colors, typography, spacing, buttons, cards, icons, and approved light/dark behavior.

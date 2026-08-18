@@ -1,6 +1,6 @@
 ---
 name: generate-ios-app-ideas
-description: Generate and refine user-provided or new general-audience portrait-only iPhone app concepts that credibly use Bluetooth, camera, contacts, Face ID, location, microphone, separate photo-library read and add access, advertising tracking, and push notifications. Produce feature-specific permission copy, a permission-review matrix, data/privacy inventory, and App Store review-risk verdict. Keep the releaseable MVP minimal; include a Lock Screen widget, notification extensions, and a minimal backend. Prefer understandable names using «YP», «Y P», or «Я П» while warning about compact «ЯП» and «YaP» variants. Use for iPhone app ideas, refinements, names, permission copy, extensions, privacy mapping, review-risk analysis, or MVP backend outlines, or when explicitly invoking $generate-ios-app-ideas.
+description: Generate and refine user-provided or new general-audience portrait-only iPhone app concepts that credibly use Bluetooth, camera, contacts, Face ID, location, microphone, separate photo-library read and add access, advertising tracking, and push notifications. Produce feature-specific permission copy, a permission-review matrix, data/privacy inventory, and App Store review-risk verdict. Keep the releaseable MVP minimal; include a Lock Screen widget, notification extensions, and a minimal Yandex Cloud backend with one remote feature flag. Prefer understandable names using «YP», «Y P», or «Я П» while warning about compact «ЯП» and «YaP» variants. Use for iPhone app ideas, refinements, names, permission copy, extensions, privacy mapping, review-risk analysis, or MVP backend outlines, or when explicitly invoking $generate-ios-app-ideas.
 ---
 
 # Generate iOS App Ideas
@@ -43,7 +43,7 @@ Make every idea satisfy all of the following:
 3. Do not add unrelated secondary product features. Supporting UI and technical code needed for navigation, state, configuration, analytics, extensions, backend interaction, permission recovery, and error handling are allowed and should be minimal.
 4. Produce feature-specific permission copy that clearly states what the app does with the requested access and why that benefits the user. Do not use generic text that could belong to an unrelated app.
 5. Include a Lock Screen widget, Notification Service Extension, and Notification Content Extension.
-6. Include the smallest backend that can demonstrate one real client-server interaction, synchronization, and push-token handling. Prefer merging responsibilities when that reduces code.
+6. Use the smallest Yandex Cloud backend that demonstrates one real client-server interaction, synchronization, push-token handling, and exactly one remote Boolean feature flag named `cloudSyncEnabled`. Prefer merging responsibilities when that reduces code.
 7. Keep the concept suitable for a general audience without age gates or content likely to create a material App Store review obstacle.
 8. Make the product exclusively an iOS app for iPhone. Do not propose iPad or iPadOS support, macOS, Mac Catalyst, Designed for iPhone/iPad on Mac distribution, visionOS or Apple Vision, watchOS, tvOS, or cross-platform and companion apps. Treat the widget and notification extensions as parts of the iPhone app.
 9. Make the iPhone application portrait-only. Keep every core flow usable without device rotation; do not propose landscape-only screens, interfaces, or features. Treat Lock Screen widget and notification layouts as portrait-oriented surfaces.
@@ -120,10 +120,11 @@ For each idea, provide:
    - Define a Notification Service Extension that enriches, decrypts, filters, or attaches media to remote notifications.
    - Define a Notification Content Extension with a compact custom notification interface and at least one relevant action.
 6. **Minimal backend**:
-   - Name the smallest useful state or entity set.
-   - Prefer only `GET /health` and one idea-specific `POST /sync` operation. Let `/sync` accept and return one compact snapshot and carry an installation identifier, lightweight authentication value, and APNs device token when practical.
-   - Add or split endpoints only when the concept cannot demonstrate its required client-server or push flow with the merged operation. Keep the total to 1–3 endpoints.
-   - Use memory or one JSON file. Avoid separate authentication, device-registration, CRUD, database, queue, admin, or recommendation layers unless they are unavoidable.
+   - Use Yandex API Gateway, one Cloud Function, and Serverless YDB. Partition shared infrastructure by `appId` so one Yandex Cloud account can support multiple applications.
+   - Prefer exactly `GET /health`, `GET /config?appId=...`, and one idea-specific `POST /sync`. Let `/sync` accept and return one compact snapshot and carry an installation identifier, lightweight authentication value, and APNs device token when practical.
+   - Define exactly one remote Boolean flag, `cloudSyncEnabled`. When false, stop backend snapshot and APNs-token synchronization while keeping the permission-centered product usable locally. Default it to true on first install and use the last successfully fetched value when configuration loading fails.
+   - Keep flag reads public and non-secret. Do not propose a public write endpoint or an in-app flag switch; administration belongs to an authenticated Yandex Cloud console, CLI, or IAM-protected function invocation.
+   - Avoid separate authentication, device-registration, CRUD, queue, admin UI, or recommendation layers unless unavoidable. Add other endpoints or flags only after explicit user approval.
 7. **Data inventory**: Summarize local data, backend payloads, notification and installation identifiers, AppMetrica data, tracking use, retention, and deletion.
 8. **Fit check**: State why all permissions, extensions, and backend belong to the same releaseable product rather than being decorative.
 9. **Review safety**: State why the concept is appropriate for a general audience, then give the low/medium/high review-risk verdict, questionable permissions, and smallest risk-reducing adjustment.
@@ -142,7 +143,7 @@ Before answering, silently verify:
 - Do not generate `ЯП`, `YaP`, `Ya P`, or `YA P` name constructions; when supplied by the user, warn about unnecessary attention to the naming and offer a nearby replacement.
 - Names are understandable and related to the concept.
 - Every idea contains all 3 required extension types.
-- The backend is minimal, preferably `/health` plus one merged `/sync`, and exposes a concrete reason to exist.
+- The backend uses Yandex API Gateway, one Cloud Function, and Serverless YDB with exactly `/health`, `/config`, `/sync`, and the single `cloudSyncEnabled` flag unless the user explicitly approves more.
 - The data inventory covers on-device, backend, APNs/installation, AppMetrica, and tracking behavior without unsupported “no collection” claims.
 - The answer contains a review-risk verdict and a smallest risk-reducing adjustment.
 - The concepts differ in audience and recurring behavior, not just visual theme.
@@ -164,7 +165,7 @@ Include:
 - All 10 authorization categories, counting photo-library read and add separately.
 - For every authorization: feature, visible trigger, exact purpose or pre-permission copy, authorization and denial behavior, accessed data, storage and transmission, privacy implication, and reviewer path.
 - Consolidated local, backend, APNs/installation, AppMetrica, and tracking data inventory, including retention and deletion behavior.
-- Minimal backend endpoints and product-level request/response fields.
+- Yandex Cloud backend contract: `/health`, `/config`, `/sync`, `appId` partitioning, the single `cloudSyncEnabled` flag, local fallback behavior, and product-level request/response fields.
 - AppMetrica and ATT-dependent behavior.
 - Lock Screen widget, Notification Service Extension, and Notification Content Extension roles.
 - App Store review-risk verdict, accepted mitigations, accepted decisions, and pending decisions.
