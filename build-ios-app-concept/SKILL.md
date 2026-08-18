@@ -1,6 +1,6 @@
 ---
 name: build-ios-app-concept
-description: Create, implement, build, launch, and verify a programmatic UIKit iPhone application from an explicitly approved AppSpec and visual design. Use only after the idea, feature-specific permission copy, permission-review matrix, data inventory, screens, seamless startup/loading experience, permission UX, visual system, and app icon are approved. Build the smallest permission-centered iOS 15 application with all required permissions, configurable privacy-aware AppMetrica, low mutable static state, Lock Screen widget, notification service/content extensions, Privacy Manifest and entitlement validation, and a minimal Yandex Cloud backend with one cloudSyncEnabled feature flag. Exclude iPad, Mac, Mac Catalyst, Designed for iPhone/iPad on Mac, visionOS, Apple Vision, storyboards, XIBs, and test targets.
+description: Create, implement, build, launch, and verify a programmatic UIKit iPhone application from an explicitly approved AppSpec and visual design. Use only after the idea, feature-specific permission copy, permission-review matrix, data inventory, screens, seamless startup/loading experience, permission UX, visual system, and app icon are approved. Build the smallest permission-centered iOS 15 application with all required permissions, configurable privacy-aware AppMetrica, low mutable static state, Lock Screen widget, notification service/content extensions, Privacy Manifest and entitlement validation, and a minimal Yandex Cloud backend with one version-resolved cloudSyncEnabled feature flag. Exclude iPad, Mac, Mac Catalyst, Designed for iPhone/iPad on Mac, visionOS, Apple Vision, storyboards, XIBs, and test targets.
 ---
 
 # Build iOS App Concept
@@ -18,7 +18,7 @@ Require:
 - `AppSpec.md` with `idea-approved` and `design-status: approved`, or equivalent explicit statuses recorded in the file.
 - Approved portrait mockups, screen inventory, seamless startup appearance and timing, permission-to-screen mapping, visual system, accessibility behavior, widget and notification layouts, and app-icon source.
 - Exact feature-specific permission and pre-permission copy for all required authorization categories.
-- Approved permission-review matrix, data inventory, AppMetrica and ATT behavior, extension roles, and Yandex Cloud backend contract with the single `cloudSyncEnabled` flag.
+- Approved permission-review matrix, data inventory, AppMetrica and ATT behavior, extension roles, and Yandex Cloud backend contract with the single version-resolved `cloudSyncEnabled` flag.
 - Destination parent directory or an existing project path.
 - Product/module name and approved lowercase ASCII product slug. Derive the main identifier as `com.idev.<product-slug>` rather than accepting another default prefix.
 
@@ -122,11 +122,13 @@ Implement the approved visual system with programmatic Auto Layout, Dynamic Type
 
 Use the approved programmatic startup view as the initial root while required local initialization and the `cloudSyncEnabled` request run concurrently. Keep the same background, named artwork asset, sizing, and placement as `UILaunchScreen`; do not add permissions, ATT prompts, advertisements, retry controls, or unrelated onboarding. Replace it with the main interface without an app-controlled fade or other animation unless that transition was explicitly approved. Show it once per cold process launch, not on foreground resume.
 
-Default the app-controlled interval from the first programmatic startup frame to a 0.7-second minimum and a 2-second maximum, or use the explicitly approved values from `AppSpec.md`. Apply this deterministic gate:
+Default the app-controlled interval from the first programmatic startup frame to a 0.7-second minimum and a 4-second maximum, or use the explicitly approved values from `AppSpec.md`. Apply this deterministic gate:
 
 - If initialization and the flag response finish before the minimum, retain the startup view until the minimum expires.
 - If they finish between the minimum and maximum, reveal the main interface immediately.
-- If the deadline expires first, stop waiting, use the last successfully cached flag or `true` on first install, and reveal the main interface. Do not add launch retries or keep the main interface blocked.
+- If the deadline expires first, stop waiting, use the last flag cached for the current app version or `true` before that version's first successful fetch, and reveal the main interface. Do not add launch retries or keep the main interface blocked.
+
+Do not cancel the single in-flight configuration request solely because the startup deadline expires. Let it finish within its ordinary request timeout; on a later success, update the current-version cache, effective flag, and already approved main-screen status without blocking or re-presenting startup. Do not add polling, a second request, or a new UI state for this case.
 
 Keep the gate instance-owned and completion-driven. Avoid observers, global state, polling, and artificial work. Treat the system-controlled time before the programmatic first frame as outside the app-controlled interval.
 
@@ -199,9 +201,9 @@ Use one reusable serverless stack:
 - One Serverless YDB database with application data partitioned by `appId`; reuse an existing user-approved mobile backend stack when available.
 - One narrowly scoped runtime service account without static keys in the repository. Keep cloud, folder, function, gateway, database, and service-account IDs in deployment documentation, not Swift source.
 
-Implement exactly one remote Boolean flag named `cloudSyncEnabled`. Store it by `appId`, expose only public read access through `/config`, and mutate it only through the authenticated Yandex Cloud console, CLI, or an IAM-protected direct function invocation. Do not expose public writes or add an in-app switch. A configuration revision is optional; omit it when unused and do not increment it merely because the Boolean changes unless client cache/version logic requires that behavior.
+Implement exactly one remote Boolean flag named `cloudSyncEnabled`. Store one optional numeric `disabledFromVersion` threshold per `appId`. Require the client to send its non-empty `CFBundleShortVersionString` as `appVersion` to `/config`; do not support a versionless public read. Return `true` below the threshold, `false` at or above it, and `true` for every version when no threshold exists. Parse and compare one to three numeric components rather than comparing strings, so `1.10` is newer than `1.2`. Do not target `CFBundleVersion` unless the user explicitly requests build-level control. Expose only public read access through `/config`, and set or clear the threshold only through the authenticated Yandex Cloud console, CLI, or an IAM-protected direct function invocation. Do not expose public writes or add an in-app switch. A configuration revision is optional; omit it when unused and do not increment it merely because the threshold changes unless client cache logic requires that behavior.
 
-Fetch the flag once from the programmatic startup view with an injected configured `URLSession`, following the approved minimum/maximum startup gate. Cache the last successful value in instance-owned state backed by `UserDefaults`; use true on first install or when the startup deadline expires without a cache. Check it before every `/sync`, including APNs-token synchronization. When false, keep local permission-backed functions, score/state, widget sharing, and Bluetooth behavior available and show the approved compact disabled status. Do not use observers, polling, streaming, or a feature-flag SDK.
+Fetch the flag once from the programmatic startup view with an injected configured `URLSession`, following the approved minimum/maximum startup gate. Cache the last successful value under a key scoped by marketing version so upgrades and downgrades cannot reuse another version's value; use true before the first successful fetch for that version or when its startup deadline expires without a version-scoped cache. Check it before every `/sync`, including APNs-token synchronization. When false, keep local permission-backed functions, score/state, widget sharing, and Bluetooth behavior available and show the approved compact disabled status. Do not use observers, polling, streaming, or a feature-flag SDK.
 
 Let `/sync` carry one compact idea-specific snapshot, an installation identifier, lightweight bearer value, and APNs device token when practical. Never transmit contacts, precise location, photos, recordings, ATT status, IDFA, or other data excluded by the approved inventory.
 
@@ -222,7 +224,7 @@ Verify in proportion to the available environment:
 1. Generate the project, resolve pinned package dependencies, and build the main app and every extension for an available simulator.
 2. Build Release without app-owned compiler warnings. Do not suppress warnings merely to pass.
 3. Uninstall and reinstall the app, then inspect the first cold launch and a repeated cold launch to expose launch-snapshot or asset-cache differences. Capture or otherwise inspect the static system stage, programmatic continuation, and final main interface separately; verify identical background, artwork, size and placement across the first two stages, the approved transition, minimum duration, response-driven completion, maximum deadline and cached/default fallback. Do not accept only the startup screen or only the main hierarchy as success, and do not create test targets or permanent debug controls for these checks.
-4. Deploy or update the Yandex Cloud backend, call `/health`, exercise `/config` and one real `/sync` round trip, verify `cloudSyncEnabled` in both false and true states, confirm public writes are rejected, and leave the flag at the user-approved final value. Do not change a configuration revision unless the implementation actually uses it.
+4. Deploy or update the Yandex Cloud backend, call `/health`, exercise `/config` and one real `/sync` round trip, verify `cloudSyncEnabled` below, at, and above `disabledFromVersion`, include a comparison such as `1.10` versus `1.2`, verify the no-threshold default, confirm version-scoped client caching and rejected public writes, and leave the rule at the user-approved final state. Do not change a configuration revision unless the implementation actually uses it.
 5. Search for storyboards, XIBs, test targets, app-owned singletons, mutable static storage, observers, `URLSession.shared`, and unsupported platform settings; fix violations or explain unavoidable framework calls.
 6. Exercise every permission feature from its approved visible trigger through authorized or simulator-available behavior and denial recovery. Capture screenshots and the accessibility hierarchy before and after important interactions. Retry a failed simulator interaction once, then classify the limitation honestly. Do not create XCTest or UI-test targets.
 7. Verify source, localized, and processed Info.plist purpose strings against `AppSpec.md` verbatim.
@@ -252,7 +254,7 @@ Create or update deterministic `Release/release-manifest.json` with:
 - App Group, capabilities, entitlement source, and verification status.
 - Permission keys, exact localized copy, trigger paths, denial behavior, data handling, and reviewer instructions.
 - Data inventory, tracking behavior, AppMetrica modules, and privacy status.
-- Yandex Cloud resource identifiers, backend URL or `pending`, `/health`, `/config`, `/sync`, `cloudSyncEnabled` final value and fallback behavior, and privacy-policy/support URLs or `pending` markers.
+- Yandex Cloud resource identifiers, backend URL or `pending`, `/health`, version-aware `/config`, `/sync`, `cloudSyncEnabled` optional `disabledFromVersion` threshold and version-scoped cache behavior, and privacy-policy/support URLs or `pending` markers.
 - Extension identifiers and roles.
 - Deterministic application states intended for future App Store screenshots.
 - Approved startup appearance, app-controlled minimum and maximum duration, initialization work, feature-flag deadline fallback, and cold-launch-only behavior.
