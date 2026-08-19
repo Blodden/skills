@@ -145,7 +145,7 @@ Run the verification section below. Fix implementation drift and build or launch
 
 ### Phase 5: Record the handoff
 
-Update the release handoff manifest and report verified behavior, configuration instructions, and external limitations. Do not claim App Store submission readiness while policy, production backend, signing, APNs, or device-only items remain pending.
+Update the release handoff manifest and report verified behavior, configuration instructions, and external limitations. Do not claim App Store submission readiness while policy, production backend, signing, or APNs items remain pending. Keep unrequested device-only verification limitations informational rather than promoting them to App Store release blockers.
 
 ## Architecture and lifetime rules
 
@@ -252,7 +252,7 @@ Verify in proportion to the available environment:
 10. Inspect source entitlements and generator configuration for App Group and Push. Verify that granting notification access registers with APNs immediately, every authorized cold launch registers again without presenting a prompt, denied or undetermined startup states do not register, and every token callback forwards the latest token. When signing exists, verify the lifecycle on a physical device and inspect provisioning profiles and signed products; otherwise list the exact pending Apple Developer steps.
 11. Verify the exact `com.idev.<product-slug>` main and extension identifiers, `group.com.idev.<product-slug>` App Group, distinct extension deployment targets, `TARGETED_DEVICE_FAMILY = 1`, iPhone-only supported platforms, disabled Mac/Catalyst/Apple Vision compatibility, and portrait-only processed main-app Info.plist.
 12. Verify the approved AppIcon is compiled without missing-icon warnings and inspect it at full size and a small Home Screen-like size.
-13. On a physical device running iOS 17 or later, add the Lock Screen widget and verify its real data updates, deep link, approved appearance, and absence of WidgetKit's `Please adopt containerBackground API` development overlay. State which Bluetooth, camera, contacts, Face ID, location, microphone, PhotoKit, ATT, remote push, signing, or other hardware checks still require a physical device or external credentials.
+13. When the user explicitly requests physical-device verification, add the Lock Screen widget on an iPhone running iOS 17 or later and verify its real data updates, deep link, approved appearance, and absence of WidgetKit's `Please adopt containerBackground API` development overlay. Do not require a separate physical-iPhone sweep of Bluetooth, camera, contacts, Face ID, location, microphone, PhotoKit, ATT, or remote-push flows for the App Store handoff, and do not list an unrequested sweep as a release blocker.
 14. For optional imported widget integration, first verify the ordinary build with `IMPORTED_WIDGET_AVAILABLE` undefined and no imported source. After the user supplies that source, define the condition, build again, and verify the approved true and false mappings for the local widget, imported widget, and iOS 18 control on supported physical devices. Verify shared App Group persistence, explicit timeline or control reloads, inactive placeholders, exact icon and copy, accessibility labels, and deep-link origin values. Keep source integration and destination-feature behavior marked `pending` until each actually exists.
 15. When signing is available, archive Release for Generic iOS Device and inspect signed app and extension entitlements. Otherwise record archive validation as signing-dependent.
 
@@ -279,10 +279,10 @@ Create or update deterministic `Release/release-manifest.json` with:
 - Optional imported-widget compile condition, approved local/imported runtime mapping, shared App Group keys, exact active and inactive presentation, deep links, and separate statuses for scaffold, imported source, destination feature, simulator verification, and physical-device verification.
 - Deterministic application states intended for future App Store screenshots.
 - Approved startup appearance, app-controlled minimum and maximum duration, initialization work, feature-flag deadline fallback, and cold-launch-only behavior.
-- Device-only, production-backend, signing, APNs, hardware, policy, and archive checks that remain unresolved.
+- Production-backend, signing, APNs, policy, and archive checks that remain unresolved. Record device-only or hardware verification only when the user explicitly requested it, and keep any unavailable result informational rather than an App Store release blocker.
 
 Never include AppMetrica API keys, APNs `.p8` files, access tokens, or other secrets.
 
 ## Handoff
 
-Lead with what works. Provide clickable paths to the project, `AppSpec.md`, configuration, backend entry point, approved mockups, app-icon master, app-owned Privacy Manifests, permission localizations, and release manifest. Include exact build and backend-run commands, configurable values, verified targets, Release and archive status, AppSpec conformance, and remaining physical-device, production, policy, credential, or signing limitations.
+Lead with what works. Provide clickable paths to the project, `AppSpec.md`, configuration, backend entry point, approved mockups, app-icon master, app-owned Privacy Manifests, permission localizations, and release manifest. Include exact build and backend-run commands, configurable values, verified targets, Release and archive status, AppSpec conformance, production, policy, credential, and signing limitations. Mention physical-device limitations only when that verification was explicitly requested.

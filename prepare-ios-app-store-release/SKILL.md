@@ -1,6 +1,6 @@
 ---
 name: prepare-ios-app-store-release
-description: Prepare an already approved and implemented portrait-only iPhone application for App Store submission. Use after build-ios-app-concept when Codex needs to create the mandatory privacy policy and support materials, add an approved in-app privacy-policy link, prepare required App Store metadata, capture one to three authentic screenshots from the existing one or two screens, draft App Privacy and mandatory compliance answers, collect minimum App Review information, and produce a local Release archive. Ask for legal and contact facts on every run without creating a reusable profile. Exclude optional marketing assets, custom EULA, TestFlight, expanded reviewer materials, repeated implementation audits, and every publish, upload, validation, submission, or release action unless the user separately and explicitly authorizes that exact external action.
+description: Prepare an already approved and implemented portrait-only iPhone application for App Store submission. Use after build-ios-app-concept when Codex needs to create the mandatory privacy policy and support materials, add an approved in-app privacy-policy link, prepare required App Store metadata, capture one to three authentic screenshots from the existing one or two screens, draft App Privacy and mandatory compliance answers, collect minimum App Review information, and produce a local Release archive. Ask for legal and contact facts one at a time on every run, keep approvals preliminary until one consolidated final reconfirmation, and never create a reusable profile. Exclude optional marketing assets, custom EULA, TestFlight, expanded reviewer materials, repeated implementation audits, and every publish, upload, validation, submission, or release action unless the user separately and explicitly authorizes that exact external action.
 ---
 
 # Prepare iOS App Store Release
@@ -35,6 +35,8 @@ Do not repeat checks for:
 - Application icon correctness.
 - Application download or installation size.
 
+Do not add a mandatory full permission sweep on a physical iPhone to App Store preparation. Treat any device-only verification already recorded by the implementation handoff as informational unless the user explicitly requests it; do not list it as a release blocker.
+
 Use the accepted values already recorded in the handoff when App Store forms need them. If a mandatory form answer is absent, ask the user or route the missing fact back to the implementation handoff; do not inspect the whole codebase to rediscover it.
 
 Do not create:
@@ -63,7 +65,7 @@ Use official Apple sources as the primary authority and cite them when reporting
 
 ## Per-run user facts
 
-Inspect the handoff first, then ask once for only the mandatory facts that cannot be derived from it. Depending on the submission, these can include:
+Inspect the handoff first, then ask only for mandatory facts that cannot be derived from it. Ask one short question at a time so the user can confirm each fact independently. Depending on the submission, these can include:
 
 - Developer or legal entity name to display in the legal documents.
 - Public support and privacy contact email.
@@ -81,13 +83,17 @@ Ask for these facts again on each independent run. Do not create or read a reusa
 
 Do not invent a legal identity, address, contact, trader status, content ownership, retention promise, or export classification. Offer a concise draft choice only when the user can validate it as factual. State that generated legal text is a preparation draft rather than legal advice.
 
+Treat every user answer and every approval gate as preliminary during preparation. Record that status explicitly in `submission.json`; preliminary approval does not authorize publication, App Store Connect mutation, upload, submission, or release. When the user later asks to proceed toward delivery, show all legal, contact, storefront, compliance, retention, URL, version, and build values together and require one explicit consolidated final reconfirmation. That reconfirmation still does not replace the separate authorization required for each external action.
+
+If the user deliberately defers the Privacy Policy effective date, public Privacy Policy URL, public Support URL, or DSA trader decision until the final pre-submission stage, keep each value `pending`, report it as a readiness blocker, and do not repeatedly ask for it during earlier gates.
+
 ## Workflow
 
 ### Phase 1: Establish the mandatory submission
 
 Read `AppSpec.md`, `Release/release-manifest.json`, the approved screen inventory, and the project configuration needed to locate the scheme and version. Determine whether this is a first release or an update, the primary locale, product name, bundle identifier, version, build number, primary category, selected storefronts, and release mode.
 
-Create `Release/AppStore/submission.json` as the local source of truth for the App Store package. Record accepted, pending, and externally blocked values explicitly. Do not include secrets.
+Create `Release/AppStore/submission.json` as the local source of truth for the App Store package. Record preliminary answers, preliminary gate approvals, deferred values, final-reconfirmation status, accepted values, and external blockers explicitly. Do not include secrets.
 
 ### Phase 2: Draft the mandatory legal pages
 
@@ -195,11 +201,13 @@ Do not create expanded permission walkthroughs, denial descriptions, video, atta
 
 After the user approves the legal text, metadata, screenshots, questionnaire answers, version, and build number:
 
-1. Apply the approved version and build number.
+1. Verify the approved version and build number in every shipped target. Apply a project change only when the existing values differ.
 2. Build every shipped target with the current App Store-compatible SDK.
 3. Create a local Release archive for Generic iOS Device with the existing signing configuration.
 4. Inspect locally that the main application and required extensions are present and that the archive identifies the intended bundle, version, and build.
 5. Do not create or run tests.
+
+If archive creation stops because the Apple Developer Team, provisioning profiles, App Group, Push capability, or other signing assets are unavailable, record the exact affected targets and cause in `submission.json`. Do not fabricate an archive or substitute an unsigned archive for the required signed Release archive.
 
 Apple-hosted validation, upload, and processing are external actions. Do not perform them during local preparation without a separate explicit authorization for the exact version and build.
 
@@ -232,6 +240,8 @@ Stop for explicit approval at these points:
 4. Exact version and build before archive creation or any external action.
 
 Approval of one gate does not imply approval of a later gate.
+
+Keep all four gate approvals preliminary until the consolidated final reconfirmation. Do not silently promote preliminary answers to final values.
 
 ## External-action boundary
 
