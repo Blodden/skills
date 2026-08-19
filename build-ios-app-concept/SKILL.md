@@ -17,6 +17,7 @@ Require:
 
 - `AppSpec.md` with `idea-approved` and `design-status: approved`, or equivalent explicit statuses recorded in the file.
 - Approved portrait mockups, screen inventory, seamless startup appearance and timing, permission-to-screen mapping, visual system, accessibility behavior, widget and notification layouts, and app-icon source.
+- For optional user-supplied widget code, approved active and inactive states for every affected Home Screen, Lock Screen, and iOS 18 Control Widget family, the exact `cloudSyncEnabled` mapping, tap deep links, accessibility labels, compile-condition name, and an honest split between scaffolded work and deferred source integration.
 - Exact feature-specific permission and pre-permission copy for all required authorization categories.
 - Approved permission-review matrix, data inventory, AppMetrica and ATT behavior, extension roles, and Yandex Cloud backend contract with the single version-resolved `cloudSyncEnabled` flag.
 - Destination parent directory or an existing project path.
@@ -60,11 +61,17 @@ Apply these rules:
 - Keep the runtime behavior, purpose copy, data inventory, ATT state, AppMetrica modules, backend payloads, privacy declarations, and reviewer instructions mutually consistent.
 - Return to specification approval if a privacy-preserving picker fully satisfies the feature and makes a required direct-access permission unjustifiable.
 
+Treat notification authorization and APNs registration as separate lifecycle steps:
+
+- After the user grants notification access, call `UIApplication.registerForRemoteNotifications()` on the main thread immediately; do not wait for another launch.
+- On every cold process launch, query `UNUserNotificationCenter.getNotificationSettings`. Re-register with APNs for `.authorized`, `.provisional`, or `.ephemeral`; do nothing for `.notDetermined` or `.denied`. This startup check must never present the authorization prompt.
+- Treat `didRegisterForRemoteNotificationsWithDeviceToken` as repeatable. Convert and forward every latest token to the approved synchronization path; never skip APNs registration because a cached token exists. Keep server transmission subject to the approved data inventory and `cloudSyncEnabled` behavior.
+
 ## Workflow
 
 ### Phase 1: Validate the handoff
 
-Create a compact implementation checklist from `AppSpec.md`: feature and permission mappings, exact copy, denial behavior, data flow, screen placement, extension roles, Yandex Cloud payloads and resource reuse, `cloudSyncEnabled` behavior, analytics and tracking behavior, app icon, platform settings, and pending external credentials. Resolve only blocking contradictions with the user.
+Create a compact implementation checklist from `AppSpec.md`: feature and permission mappings, exact copy, denial behavior, data flow, screen placement, extension roles, Yandex Cloud payloads and resource reuse, `cloudSyncEnabled` behavior, analytics and tracking behavior, app icon, platform settings, and pending external credentials. For optional imported widget code, separately mark approved design, compile scaffold, shared-flag propagation, imported source, deep-link destination, and device verification as complete or pending. Resolve only blocking contradictions with the user.
 
 ### Phase 2: Create the project
 
@@ -173,20 +180,32 @@ Before integration, consult current official AppMetrica iOS documentation and pa
 - Register or select one AppMetrica application matching the final `com.idev.<product-slug>` identifier. Obtain its SDK API key from AppMetrica Settings; do not use a Post API key. One AppMetrica account may contain multiple applications, but each generated iPhone application must use its own explicitly supplied SDK key unless the user deliberately requests cross-application reporting.
 - Store the supplied key only in the application's `.xcconfig` configuration and expose it to the processed Info.plist through build-setting substitution. Do not hardcode it in Swift, copy it into `AppSpec.md`, a release manifest, skill files, logs, or user-facing UI.
 - Isolate SDK calls in an instance-owned `AppMetricaAnalyticsClient`; do not expose an application singleton.
-- Make `APPMETRICA_API_KEY` replaceable without Swift changes. With an empty or invalid key, disable analytics gracefully and keep the app usable.
+- Make `APPMETRICA_API_KEY` replaceable without Swift changes. Treat every user-supplied startup or runtime SDK key as valid and pass it to AppMetrica unchanged: do not trim, normalize, prevalidate, add empty-key fallbacks, or log and recover from invalid-key failures.
 - Activate AppMetrica once from the application composition root. Explicitly disable SDK location tracking when location is not part of the approved AppMetrica data inventory, and enable advertising-identifier tracking only after ATT authorization.
 - Keep selected modules, data sending, advertising support, and ATT-dependent behavior consistent with `AppSpec.md` and current official SDK controls.
-- Report only useful product events such as screen open, feature action, permission outcome, and API result. Do not add a synthetic app-launch event. Never send contacts, precise location, media, recordings, advertising identifiers, secrets, or other sensitive payloads as custom event parameters.
+- Report only useful product events such as screen open, feature action, permission outcome, and API result. Pass `nil` for AppMetrica event failure callbacks; do not add `NSLog`, return statuses, or other app-owned handling for activation, reporter creation, or event-delivery errors. Do not add a synthetic app-launch event. Never send contacts, precise location, media, recordings, advertising identifiers, secrets, or other sensitive payloads as custom event parameters.
 - Record SDK-level collection separately from custom event parameters and document that changing the API key may require terminating and relaunching the process.
-- Implement runtime API-key switching only when the user explicitly requests it. Route subsequent custom events through an AppMetrica reporter for the new key, manage that reporter's session manually, and state that the main SDK's automatic data remains associated with the original activation until the next process launch. Persist an override in `UserDefaults` only when approved; do not add a settings screen solely for key switching.
+- Implement runtime API-key switching only when the user explicitly requests it. Provide a minimal `changeAPIKey(_:)` method with no return status, obtain the AppMetrica reporter directly from the unchanged supplied key, route subsequent custom events through it, and manage that reporter's session manually. State that the main SDK's automatic data remains associated with the original activation until the next process launch. Persist an override in `UserDefaults` only when approved; do not add a settings screen solely for key switching.
 
 ## Extensions
 
 Implement all approved extensions as real, small targets:
 
-- Lock Screen widget: display the approved glanceable state. Share only a compact Codable snapshot through App Group `UserDefaults` or a small file. Do not observe shared defaults; reload timelines explicitly after writes.
+- Lock Screen widget: display the approved glanceable state. Share only a compact Codable snapshot through App Group `UserDefaults` or a small file. Do not observe shared defaults; reload timelines explicitly after writes. On iOS 17 and later, mark the widget with a removable `containerBackground(..., for: .widget)` and retain an availability-gated iOS 16 fallback. Use a clear container when the approved Lock Screen design has no custom background. Do not set `containerBackgroundRemovable(false)` merely to silence WidgetKit's development warning because it can exclude the widget from contexts that require removable backgrounds.
 - Notification Service Extension: enrich or transform remote content as approved, keep networking optional and time-bounded, and always call the content handler with the best available content.
 - Notification Content Extension: render the approved compact programmatic UI and route actions through notification categories or deep links.
+
+When `AppSpec.md` approves optional user-supplied or copied widget code, prepare it without making the current build depend on absent source:
+
+- Use neutral names such as `ImportedWidget` and `ImportedControlWidget`; never retain source-application names in new type names, compile settings, assets, URLs, or user-facing copy.
+- Keep the application-owned widget configuration unconditionally present in the `WidgetBundle`. Put imported widget references behind the Swift active compilation condition `IMPORTED_WIDGET_AVAILABLE`, and leave that condition undefined until the imported files and every referenced type are present. The default project must therefore compile and build before any imported code is copied.
+- Add an availability-gated iOS 18 `ControlWidget` in the same optional branch only when it was approved. Do not raise the deployment target of the iOS 16 Lock Screen widget extension merely to add it.
+- Keep compile availability and runtime activation independent. WidgetKit does not dynamically unregister configurations: when imported code is compiled, keep both local and imported configurations registered and render the approved active or neutral inactive state according to the shared `cloudSyncEnabled` value.
+- Persist the resolved flag and the application marketing version to the shared App Group after applying the startup default, cached value, or network result. Give widgets a deterministic fallback matching `AppSpec.md`; do not let extensions fetch configuration from the network, observe defaults, or poll.
+- After a changed effective value is written, explicitly reload only the affected WidgetKit timelines or controls. Avoid unnecessary reloads when the persisted value has not changed.
+- Follow the exact approved mapping. For the established two-widget convention, `cloudSyncEnabled == true` activates `ImportedWidget` and `ImportedControlWidget` while the local widget displays its inactive placeholder; `false` activates the local widget and makes both imported configurations inactive. Use another mapping only when `AppSpec.md` explicitly approves it.
+- Implement the approved inactive placeholder in every supported family. Keep compact families icon-only when required, provide the full VoiceOver label, and make taps open the application. Preserve the exact approved active icon and copy; do not retain letters, logos, or payment wording when the accepted design uses a neutral QR scanner and the action text `Сканирование QR-кода`.
+- Preserve stable app-owned deep links for deferred actions, including distinct widget and control origins when approved. The project must still build if their destination feature has not been copied; opening the application is sufficient until that feature receives its own approved design and implementation. Do not fabricate or copy the deferred feature as part of widget scaffolding.
 
 Give targets distinct bundle identifiers and link only their required frameworks and resources. Do not link the complete application graph into an extension.
 
@@ -228,13 +247,14 @@ Verify in proportion to the available environment:
 5. Search for storyboards, XIBs, test targets, app-owned singletons, mutable static storage, observers, `URLSession.shared`, and unsupported platform settings; fix violations or explain unavoidable framework calls.
 6. Exercise every permission feature from its approved visible trigger through authorized or simulator-available behavior and denial recovery. Capture screenshots and the accessibility hierarchy before and after important interactions. Retry a failed simulator interaction once, then classify the limitation honestly. Do not create XCTest or UI-test targets.
 7. Verify source, localized, and processed Info.plist purpose strings against `AppSpec.md` verbatim.
-8. Verify empty-key AppMetrica behavior. With the user-supplied SDK key, inspect the processed Info.plist without printing the key, verify successful activation and delivery attempts for approved product events triggered by real screen or feature actions, and record AppMetrica-console receipt as user/account-dependent when console access is unavailable. Verify that no synthetic app-launch event is reported.
+8. With the user-supplied SDK key, inspect the processed Info.plist without printing the key, verify activation and approved product events triggered by real screen or feature actions, and record AppMetrica-console receipt as user/account-dependent when console access is unavailable. Do not test empty or malformed keys, add failure logging, or introduce synthetic app-launch events.
 9. Inspect each app-owned target's Privacy Manifest and resolved SDK manifests against actual APIs and the approved data inventory.
-10. Inspect source entitlements and generator configuration for App Group and Push. When signing exists, inspect provisioning profiles and signed products; otherwise list the exact pending Apple Developer steps.
+10. Inspect source entitlements and generator configuration for App Group and Push. Verify that granting notification access registers with APNs immediately, every authorized cold launch registers again without presenting a prompt, denied or undetermined startup states do not register, and every token callback forwards the latest token. When signing exists, verify the lifecycle on a physical device and inspect provisioning profiles and signed products; otherwise list the exact pending Apple Developer steps.
 11. Verify the exact `com.idev.<product-slug>` main and extension identifiers, `group.com.idev.<product-slug>` App Group, distinct extension deployment targets, `TARGETED_DEVICE_FAMILY = 1`, iPhone-only supported platforms, disabled Mac/Catalyst/Apple Vision compatibility, and portrait-only processed main-app Info.plist.
 12. Verify the approved AppIcon is compiled without missing-icon warnings and inspect it at full size and a small Home Screen-like size.
-13. State which Bluetooth, camera, contacts, Face ID, location, microphone, PhotoKit, ATT, remote push, signing, or hardware checks still require a physical device or external credentials.
-14. When signing is available, archive Release for Generic iOS Device and inspect signed app and extension entitlements. Otherwise record archive validation as signing-dependent.
+13. On a physical device running iOS 17 or later, add the Lock Screen widget and verify its real data updates, deep link, approved appearance, and absence of WidgetKit's `Please adopt containerBackground API` development overlay. State which Bluetooth, camera, contacts, Face ID, location, microphone, PhotoKit, ATT, remote push, signing, or other hardware checks still require a physical device or external credentials.
+14. For optional imported widget integration, first verify the ordinary build with `IMPORTED_WIDGET_AVAILABLE` undefined and no imported source. After the user supplies that source, define the condition, build again, and verify the approved true and false mappings for the local widget, imported widget, and iOS 18 control on supported physical devices. Verify shared App Group persistence, explicit timeline or control reloads, inactive placeholders, exact icon and copy, accessibility labels, and deep-link origin values. Keep source integration and destination-feature behavior marked `pending` until each actually exists.
+15. When signing is available, archive Release for Generic iOS Device and inspect signed app and extension entitlements. Otherwise record archive validation as signing-dependent.
 
 Do not broaden the MVP while fixing verification failures.
 
@@ -256,6 +276,7 @@ Create or update deterministic `Release/release-manifest.json` with:
 - Data inventory, tracking behavior, AppMetrica modules, and privacy status.
 - Yandex Cloud resource identifiers, backend URL or `pending`, `/health`, version-aware `/config`, `/sync`, `cloudSyncEnabled` optional `disabledFromVersion` threshold and version-scoped cache behavior, and privacy-policy/support URLs or `pending` markers.
 - Extension identifiers and roles.
+- Optional imported-widget compile condition, approved local/imported runtime mapping, shared App Group keys, exact active and inactive presentation, deep links, and separate statuses for scaffold, imported source, destination feature, simulator verification, and physical-device verification.
 - Deterministic application states intended for future App Store screenshots.
 - Approved startup appearance, app-controlled minimum and maximum duration, initialization work, feature-flag deadline fallback, and cold-launch-only behavior.
 - Device-only, production-backend, signing, APNs, hardware, policy, and archive checks that remain unresolved.

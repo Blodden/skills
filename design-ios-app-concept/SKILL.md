@@ -39,6 +39,8 @@ Treat every new or changed user-facing screen or state requested after design ap
 - Keep every layout feasible with programmatic UIKit, Auto Layout, iOS 15, iPhone-only deployment, and portrait-only orientation. Use SwiftUI only for the WidgetKit target where appropriate.
 - Use native controls and navigation where practical. Support Dynamic Type, a logical VoiceOver order, meaningful labels and values, 44×44 point touch targets, sufficient light/dark contrast, and non-color status cues.
 - Keep the Lock Screen widget glanceable and the notification content compact. Do not design them as substitute application screens.
+- When the accepted concept will later receive user-supplied or copied widget code, treat it as an optional imported configuration rather than pretending that code already exists. Render and approve every locally owned and imported Home Screen, Lock Screen, and iOS 18 Control Widget state that can be visible. For each configuration, approve its active content, neutral inactive placeholder, icon, exact text, tap destination, accessibility label, supported family, minimum OS, and the `cloudSyncEnabled` active/inactive mapping. State explicitly that WidgetKit configurations remain registered at runtime and the flag changes their presented state rather than adding or removing configurations.
+- Keep compile availability separate from runtime activation. Record that implementation must build without the future imported source, identify the neutral compile-condition name, and leave the condition undefined until the user supplies the source and its referenced types compile. Do not design or infer the deferred feature behind a deep link; preserve only its approved action and stable app-owned URL until that feature is separately designed and implemented.
 
 ## Workflow
 
@@ -64,7 +66,7 @@ Provide:
 3. Low-fidelity wireframes for every distinct screen or important state.
 4. The single startup screen plus main, empty, loading, error, permission-not-determined, denied, limited, authorized, and compact `cloudSyncEnabled` disabled/offline states where relevant. Specify the startup background, artwork source, sizing, placement, corner treatment, text and indicator choice, transition, approved 0.7-second minimum, 4-second maximum, and timeout fallback.
 5. The exact action that triggers each system permission request and the approved copy reproduced verbatim.
-6. Widget and notification-content layouts plus relevant notification actions.
+6. Widget and notification-content layouts plus relevant notification actions. When optional imported widgets are planned, include active and inactive layouts for every affected family, the local-versus-imported `cloudSyncEnabled` mapping, compile-availability boundary, stable deep links, accessibility labels, and any iOS 18 Control Widget state.
 7. A compact visual system covering colors, typography, spacing, buttons, cards, icons, and approved light/dark behavior.
 8. An accessibility specification covering Dynamic Type, VoiceOver names and order, grouping, touch targets, contrast, and non-color cues.
 9. One original square app-icon direction consistent with the approved name and visual system. Keep it recognizable without small text or pre-rounded corners. Do not use an SF Symbol, Apple logo, Apple product glyph, or confusingly similar mark as the app icon or logo.
@@ -81,7 +83,7 @@ Store approved candidates in the application workspace under `Design/` using cle
 
 ### Phase 4: Approval gate
 
-Ask the user to approve the screen structure, startup appearance, timing and fallback behavior, feature placement, permission triggers and denied states, visual system, widget and notification layouts, and app icon. **Stop and wait. Do not start implementation.**
+Ask the user to approve the screen structure, startup appearance, timing and fallback behavior, feature placement, permission triggers and denied states, visual system, every active and inactive widget or control state, their feature-flag mapping and tap actions, notification layouts, and app icon. **Stop and wait. Do not start implementation.**
 
 After explicit approval, update `AppSpec.md` with:
 
@@ -91,6 +93,7 @@ After explicit approval, update `AppSpec.md` with:
 - permission-to-screen and state mapping;
 - visual system and accessibility behavior;
 - widget and notification layouts;
+- optional imported-widget status split into already approved or scaffolded work and deferred source integration, including the compile condition, active/inactive mapping, exact icon and text, deep links, and remaining device verification;
 - paths to approved mockups and app-icon source;
 - approval-dependent decisions and remaining pending items.
 
