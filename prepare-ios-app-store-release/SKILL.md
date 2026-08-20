@@ -21,6 +21,7 @@ Start only when these inputs exist:
 - `Release/release-manifest.json` produced by the implementation skill.
 - A buildable main iPhone target and its required extensions.
 - The intended primary App Store locale.
+- The application's shipped localizations as recorded by the implementation handoff.
 
 Treat `AppSpec.md` as the accepted product and privacy contract and `Release/release-manifest.json` as the implementation handoff. If either is missing or they visibly contradict each other, stop and request an updated handoff from the appropriate earlier skill. Do not reconstruct a release contract by performing a new application audit.
 
@@ -44,13 +45,17 @@ Do not create:
 - Marketing URL or promotional text.
 - App previews or videos.
 - Optional reviewer notes, walkthroughs, attachments, or hardware demonstrations.
-- Additional localizations not requested as the primary submission locale.
+- Additional App Store product-page localizations not explicitly requested by the user.
 - Terms of Use or a custom EULA. Use Apple's standard EULA.
 - TestFlight groups or testing workflows.
 - Unit tests, UI tests, test targets, fixtures, or test-only code.
 - A reusable developer, legal, or App Store profile.
 
 Never use a third-party legal-document generator unless the user makes a separate request to do so.
+
+Keep application localization separate from App Store product-page localization. Shipping Russian and English UI does not by itself authorize or require English metadata or screenshots in App Store Connect. Prepare only the explicitly selected App Store locale or locales.
+
+For this skill family, default to English (U.S.) as the App Store Primary Language and Russian as a secondary product-page localization when that pairing is recorded in the approved handoff or explicitly accepted by the user. Prepare authentic metadata and screenshots for both locales. Use another locale set or order only when the user explicitly chooses it; do not infer product-page locales from binary localizations alone.
 
 ## Current Apple requirements
 
@@ -93,7 +98,7 @@ If the user deliberately defers the Privacy Policy effective date, public Privac
 
 Read `AppSpec.md`, `Release/release-manifest.json`, the approved screen inventory, and the project configuration needed to locate the scheme and version. Determine whether this is a first release or an update, the primary locale, product name, bundle identifier, version, build number, primary category, selected storefronts, and release mode.
 
-Create `Release/AppStore/submission.json` as the local source of truth for the App Store package. Record preliminary answers, preliminary gate approvals, deferred values, final-reconfirmation status, accepted values, and external blockers explicitly. Do not include secrets.
+Create `Release/AppStore/submission.json` as the local source of truth for the App Store package. Record shipped application localizations separately from requested App Store metadata localizations, along with preliminary answers, preliminary gate approvals, deferred values, final-reconfirmation status, accepted values, and external blockers. Do not include secrets.
 
 ### Phase 2: Draft the mandatory legal pages
 
@@ -124,7 +129,7 @@ After the user supplies the real URL:
 
 1. Propose one minimal placement on an existing approved screen, normally a small text button at the bottom of the primary screen.
 2. Obtain explicit approval for that placement.
-3. Modify only the code needed to display `Политика конфиденциальности` or its approved localization and open the real URL through `SFSafariViewController` or the system browser.
+3. Modify only the code needed to display the approved localized Privacy Policy title in every shipped application language and open the real URL through `SFSafariViewController` or the system browser.
 4. Do not add a settings, information, legal, or onboarding screen solely for the link.
 5. Build and launch the application and verify that the link is visible, accessible, and opens the correct HTTPS page.
 
@@ -132,7 +137,7 @@ Preserve the approved visual system and minimum application scope. Record the re
 
 ### Phase 4: Prepare mandatory App Store metadata
 
-Create `Release/AppStore/metadata/<locale>.md` containing:
+Create `Release/AppStore/metadata/<locale>.md` for each explicitly requested App Store product-page locale, containing:
 
 - App name.
 - Subtitle.
@@ -151,7 +156,7 @@ Do not add optional product-page fields or a secondary category.
 
 ### Phase 5: Capture one to three authentic screenshots
 
-Use only the application's existing one or two approved screens. Do not create a screen, feature, or navigation path for App Store imagery.
+Use only the application's existing one or two approved screens. Do not create a screen, feature, or navigation path for App Store imagery. Capture screenshots only for explicitly requested App Store product-page locales; do not create an English set merely because the binary supports English.
 
 1. Select one to three meaningful existing states that explain the application with minimum repetition.
 2. Populate deterministic demonstration data without real contacts, locations, photos, recordings, identifiers, notification contents, or other personal information.

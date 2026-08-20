@@ -1,6 +1,6 @@
 ---
 name: generate-ios-app-ideas
-description: Generate and refine user-provided or new general-audience portrait-only iPhone app concepts that credibly use Bluetooth, camera, contacts, Face ID, location, microphone, separate photo-library read and add access, advertising tracking, and push notifications. Produce feature-specific permission copy, a permission-review matrix, data/privacy inventory, and App Store review-risk verdict. Keep the releaseable MVP minimal; include a Lock Screen widget, notification extensions, and a minimal Yandex Cloud backend with one version-resolved remote feature flag. Prefer understandable names using «YP», «Y P», or «Я П» while warning about compact «ЯП» and «YaP» variants. Use for iPhone app ideas, refinements, names, permission copy, extensions, privacy mapping, review-risk analysis, or MVP backend outlines, or when explicitly invoking $generate-ios-app-ideas.
+description: Generate and refine user-provided or new general-audience portrait-only iPhone app concepts that credibly use Bluetooth, camera, contacts, Face ID, location, microphone, separate photo-library read and add access, advertising tracking, and push notifications. Produce English-first and Russian feature-specific permission copy, a permission-review matrix, data/privacy inventory, and App Store review-risk verdict. Keep the releaseable MVP minimal; include a Lock Screen widget, notification extensions, and a minimal Yandex Cloud backend with one version-resolved remote feature flag. Prefer understandable names using «YP», «Y P», or «Я П» while warning about compact «ЯП» and «YaP» variants. Use for iPhone app ideas, refinements, names, permission copy, extensions, privacy mapping, review-risk analysis, localization planning, or MVP backend outlines, or when explicitly invoking $generate-ios-app-ideas.
 ---
 
 # Generate iOS App Ideas
@@ -48,6 +48,7 @@ Make every idea satisfy all of the following:
 8. Make the product exclusively an iOS app for iPhone. Do not propose iPad or iPadOS support, macOS, Mac Catalyst, Designed for iPhone/iPad on Mac distribution, visionOS or Apple Vision, watchOS, tvOS, or cross-platform and companion apps. Treat the widget and notification extensions as parts of the iPhone app.
 9. Make the iPhone application portrait-only. Keep every core flow usable without device rotation; do not propose landscape-only screens, interfaces, or features. Treat Lock Screen widget and notification layouts as portrait-oriented surfaces.
 10. Derive the main bundle identifier as `com.idev.<product-slug>`. Normalize the slug to lowercase ASCII letters and digits without spaces or punctuation; transliterate non-Latin names and ask for approval only when the result is ambiguous. Reserve `.widget`, `.notification-service`, and `.notification-content` suffixes for the required extensions and `group.com.idev.<product-slug>` for the App Group.
+11. Support English and Russian from the specification stage. Use English as the development and fallback localization and Russian as a second fully shipped localization unless the user explicitly approves another order. Follow the iPhone's system language without adding an in-app language selector, and require approved localized copy for every user-facing application, widget, notification, accessibility, and permission surface.
 
 Treat the naming pattern as a strong preference, not a hard constraint. Prefer names containing or clearly expanding to «YP», «Y P», or «Я П», but keep a stronger natural name when forcing the pattern would make it unclear or awkward.
 
@@ -73,7 +74,7 @@ For names using a preferred pattern, emphasize its letters with bold Markdown an
 
 ## Permission specification
 
-Create exact purpose copy only after the feature mapping is stable. For each capability, write one concise, natural sentence in the product language that names the concrete feature or result and explains the user benefit. Avoid vague phrases such as “для работы функций,” claims about features the MVP does not implement, and lists such as “фото, видео и сканирование” when only one behavior exists.
+Create exact purpose copy only after the feature mapping is stable. For each capability, write one concise, natural English sentence and one equivalent natural Russian sentence that name the concrete feature or result and explain the user benefit. Translate intent rather than words while keeping both versions factually identical. Avoid vague phrases such as “for app features” or “для работы функций,” claims about features the MVP does not implement, and lists such as “photos, videos, and scanning” when only one behavior exists.
 
 Map the copy to these surfaces:
 
@@ -90,7 +91,7 @@ Map the copy to these surfaces:
 | Advertising tracking | `NSUserTrackingUsageDescription` |
 | Push notifications | In-app pre-permission explanation; iOS owns the system notification alert copy |
 
-Keep photo-library read access and add-only access separate in copy, rationale, data handling, and user actions. When multiple languages are requested, provide a base value plus localized values suitable for `InfoPlist.strings`; do not pretend runtime code can replace static purpose strings.
+Keep photo-library read access and add-only access separate in copy, rationale, data handling, and user actions. Provide approved `ru` and `en` values suitable for localized `InfoPlist.strings`; do not pretend runtime code can replace static purpose strings. Add another language only when the user requests it.
 
 ## Permission and privacy review
 
@@ -98,7 +99,7 @@ For every required capability, create a permission-to-review row containing:
 
 - exact reachable button, screen, or action that initiates the request;
 - concrete feature and user benefit;
-- exact purpose or pre-permission copy;
+- exact Russian and English purpose or pre-permission copy;
 - behavior after authorization, limited access, denial, restriction, and unavailability as applicable;
 - data accessed, whether it remains local or is sent to the backend or AppMetrica, and its retention/deletion behavior;
 - App Store privacy-label or tracking implication;
@@ -115,7 +116,7 @@ For each idea, provide:
 1. **Concept**: Describe the product, target user, and primary recurring action in 2–3 sentences.
 2. **Names**: Give the requested number of understandable name variants following the naming rules.
 3. **MVP**: List the fewest coherent user-facing functions that together exercise all required permissions. Map every function to at least one permission, allow one function to cover several permissions, and exclude unrelated or speculative secondary features.
-4. **Permission review matrix**: For all required capabilities, provide the action, benefit, exact feature-specific copy, authorization and denial behavior, data handling, privacy-label implication, and reviewer instruction. Map direct photo-library reading separately from adding media.
+4. **Permission review matrix**: For all required capabilities, provide the action, benefit, exact Russian and English feature-specific copy, authorization and denial behavior, data handling, privacy-label implication, and reviewer instruction. Map direct photo-library reading separately from adding media.
 5. **Extensions**:
    - Define one glanceable Lock Screen widget using WidgetKit. Use ActivityKit only when the concept has a genuinely live, time-bound state.
    - Define a Notification Service Extension that enriches, decrypts, filters, or attaches media to remote notifications.
@@ -137,6 +138,7 @@ Before answering, silently verify:
 - Every idea covers all 10 required permission or authorization categories, counting photo-library read and add access separately.
 - Every required permission is exercised by a reachable user action, not only listed in configuration.
 - Every purpose string names the implemented feature and user benefit; no generic or misleading copy remains.
+- Every user-facing application, widget, notification, accessibility, and permission surface has approved Russian and English copy with equivalent meaning.
 - Every permission has authorization, denial, data-handling, privacy-label, and reviewer-path entries.
 - Full Contacts and Photo Library access, Face ID, ATT, and Bluetooth each have a credible core purpose rather than a decorative prompt.
 - Every user-facing MVP feature supports at least one required permission; supporting technical behavior is allowed but minimized.
@@ -165,7 +167,8 @@ Include:
 - Product name, deterministic `com.idev.<product-slug>` main bundle identifier, derived extension bundle identifiers and App Group identifier, concept, audience, primary recurring action, and permission-centered MVP.
 - iPhone-only, portrait-only, and minimum-iOS requirements.
 - All 10 authorization categories, counting photo-library read and add separately.
-- For every authorization: feature, visible trigger, exact purpose or pre-permission copy, authorization and denial behavior, accessed data, storage and transmission, privacy implication, and reviewer path.
+- Supported application localizations: English as development/fallback and Russian as secondary, resolved from the system language without an in-app selector, unless the user explicitly approves another order.
+- For every authorization: feature, visible trigger, exact Russian and English purpose or pre-permission copy, authorization and denial behavior, accessed data, storage and transmission, privacy implication, and reviewer path.
 - Consolidated local, backend, APNs/installation, AppMetrica, and tracking data inventory, including retention and deletion behavior.
 - Yandex Cloud backend contract: `/health`, version-aware `/config`, `/sync`, `appId` partitioning, optional numeric `disabledFromVersion` threshold for the single `cloudSyncEnabled` flag, version-scoped local fallback behavior, and product-level request/response fields.
 - AppMetrica and ATT-dependent behavior, useful product-event inventory without a synthetic app-launch event, and per-application SDK API key status as `pending` until the user supplies it. Never reuse or invent another application's key.

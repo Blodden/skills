@@ -1,6 +1,6 @@
 ---
 name: design-ios-app-concept
-description: Design and render an accepted portrait-only iPhone application concept before implementation. Use when an idea, name, permissions, feature-specific permission copy, data behavior, extensions, and minimal backend have already been accepted and the user wants screen structure, a seamless startup/loading experience, permission UX, visual mockups, accessibility behavior, widget and notification layouts, or an app icon. Produce an approved design handoff without creating an Xcode project, application source code, dependencies, or backend code.
+description: Design and render an accepted portrait-only iPhone application concept before implementation. Use when an idea, name, permissions, English and Russian feature-specific permission copy, data behavior, extensions, and minimal backend have already been accepted and the user wants screen structure, localized UI states, a seamless startup/loading experience, permission UX, visual mockups, accessibility behavior, widget and notification layouts, or an app icon. Produce an approved design handoff without creating an Xcode project, application source code, dependencies, or backend code.
 ---
 
 # Design iOS App Concept
@@ -21,6 +21,8 @@ Do not reopen accepted decisions unless they create a concrete feasibility, priv
 
 Treat every new or changed user-facing screen or state requested after design approval as a design delta. Render and present at least the affected screen or state, obtain explicit approval, and update `AppSpec.md` before implementation. A request to implement does not approve an appearance the user has not seen. Never mark a design delta approved after its code has already been written.
 
+Treat a new or changed localization as a design delta because translated copy can change wrapping, truncation, hierarchy, and accessibility. Preserve the approved layout when it still fits, render at least the affected primary state in the new language, and obtain explicit approval before implementation.
+
 ## Design rules
 
 - Use the fewest screens that keep all permission-backed flows understandable. Prefer one primary screen with compact sections, sheets, alerts, and Apple-provided controllers.
@@ -28,6 +30,8 @@ Treat every new or changed user-facing screen or state requested after design ap
 - Map every user-facing feature to at least one required authorization. Supporting navigation, state, configuration, analytics, extensions, backend interaction, and error handling are allowed and must stay minimal.
 - Request a permission only after the user selects the visible feature that needs it. Never design a batch of prompts at launch.
 - Preserve exact approved feature-specific permission copy. For push authorization, design the app-owned explanation while recognizing that iOS owns the system alert text.
+- Support the approved English and Russian localizations through the system language. Use English as the development/fallback localization and Russian as a second fully shipped localization unless `AppSpec.md` explicitly approves another order. Do not add an in-app language selector unless the user separately approves that product feature. Keep meaning and feature claims equivalent across locales.
+- Check both localizations at the largest supported Dynamic Type size practical for the layout. Allow natural wrapping, but do not solve translation overflow by shrinking text below the approved typography or by changing product scope.
 - Cover `notDetermined`, authorized or limited, denied, restricted, unavailable, loading, empty, offline, success, and error states where applicable.
 - Represent `cloudSyncEnabled` with only compact checking, available, remotely disabled, and offline/fallback status states in an existing screen. Do not add an in-app switch, settings screen, or separate feature-flag UI.
 - Design one user-perceived startup screen, not two visibly different screens. Explicitly present and obtain approval for its background, artwork source such as the app icon or a separate mark, sizing, placement, corner treatment, presence or absence of text and an indicator, and transition to the main interface. Make the static iOS launch representation and its programmatic continuation use the same approved background, artwork, sizing, and placement so the handoff has no perceptible flash. Keep the static representation free of dynamic content and nonlocalized text.
@@ -54,6 +58,7 @@ Summarize without redefining:
 - denial behavior and data handling;
 - Yandex Cloud backend, `cloudSyncEnabled` fallback and disabled behavior, AppMetrica event inventory and per-application SDK key status, ATT, widget, and notification-extension roles;
 - platform, orientation, general-audience, and review-risk constraints.
+- supported application localizations and exact Russian and English permission copy.
 
 Resolve contradictions with the user before rendering. Do not continue from an internally inconsistent specification.
 
@@ -70,12 +75,13 @@ Provide:
 7. A compact visual system covering colors, typography, spacing, buttons, cards, icons, and approved light/dark behavior.
 8. An accessibility specification covering Dynamic Type, VoiceOver names and order, grouping, touch targets, contrast, and non-color cues.
 9. One original square app-icon direction consistent with the approved name and visual system. Keep it recognizable without small text or pre-rounded corners. Do not use an SF Symbol, Apple logo, Apple product glyph, or confusingly similar mark as the app icon or logo.
+10. A Russian and English string matrix for application controls, states, alerts, accessibility, widgets, notification actions/content, image-rendered text, and permission surfaces. Keep technical identifiers, analytics event names, URLs, and backend fields unlocalized.
 
 Run a compact HIG, accessibility, permission-flow, and implementation-feasibility preflight before asking for approval. Fix conflicts between the written design and accepted specification first.
 
 ### Phase 3: Render and present
 
-Use the available image-generation capability to create a rendered portrait iPhone mockup for every distinct user-facing screen. At minimum, always render the primary screen. A readable portrait-oriented composite artboard is acceptable when several screens are simple. Do not render landscape, iPad, Mac, or Apple Vision variants.
+Use the available image-generation capability to create a rendered portrait iPhone mockup for every distinct user-facing screen. At minimum, always render the primary screen in English and Russian, presenting English as the primary state unless `AppSpec.md` approves another order. For an incremental localization delta, render only the newly affected locale and states whose text or layout changes. A readable portrait-oriented composite artboard is acceptable when several screens are simple. Do not render landscape, iPad, Mac, or Apple Vision variants.
 
 Render one square app-icon master and show it at full size and a small Home Screen-like preview. Treat mockups as review artifacts, not proof of implementation. Keep every rendered element consistent with the written screen inventory and feasible in programmatic UIKit.
 
@@ -83,7 +89,7 @@ Store approved candidates in the application workspace under `Design/` using cle
 
 ### Phase 4: Approval gate
 
-Ask the user to approve the screen structure, startup appearance, timing and fallback behavior, feature placement, permission triggers and denied states, visual system, every active and inactive widget or control state, their feature-flag mapping and tap actions, notification layouts, and app icon. **Stop and wait. Do not start implementation.**
+Ask the user to approve the screen structure, Russian and English copy and rendered states, startup appearance, timing and fallback behavior, feature placement, permission triggers and denied states, visual system, every active and inactive widget or control state, their feature-flag mapping and tap actions, notification layouts, and app icon. **Stop and wait. Do not start implementation.**
 
 After explicit approval, update `AppSpec.md` with:
 
@@ -91,6 +97,7 @@ After explicit approval, update `AppSpec.md` with:
 - approved screen inventory and navigation;
 - approved startup appearance, minimum and maximum duration, initialization work, feature-flag timeout fallback, and cold-launch-only behavior;
 - permission-to-screen and state mapping;
+- supported localizations, approved Russian and English string matrix, locale-specific wrapping decisions, and paths to localized mockups;
 - visual system and accessibility behavior;
 - widget and notification layouts;
 - optional imported-widget status split into already approved or scaffolded work and deferred source integration, including the compile condition, active/inactive mapping, exact icon and text, deep links, and remaining device verification;
